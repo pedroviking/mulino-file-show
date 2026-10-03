@@ -4,7 +4,7 @@ Tags: documents, files, folders, file manager, document library
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,11 @@ with a single shortcode.
 **Admin features**
 
 * Drag and drop files straight from your computer to upload them into a folder
+* Drag a whole folder from your computer to upload it with all its subfolders
 * Drag existing documents or whole folders to re-file them
+* Tick several documents to move them or move them to the trash together
+* Export the whole library as a ZIP file, with the folders intact
+* Import from Simple File List, which has been closed on WordPress.org
 * Rename or delete folders and documents from the same screen
 * Nested folders of unlimited depth
 * Uploads run one file at a time with a progress bar, and files that are too big for your web host are caught before they are sent
@@ -58,6 +62,21 @@ https://github.com/pedroviking/mulino-file-show
    show the public folder browser.
 
 == Frequently Asked Questions ==
+
+= How do I switch from Simple File List? =
+
+Simple File List was closed on WordPress.org in July 2026 and no longer receives security updates. To move your files over:
+
+1. Install and activate Mulino file show. Keep Simple File List installed for now.
+2. Go to **File Show > Import** and click **Start import**. The files are copied into the Media Library, and subfolders, file names, descriptions and upload dates are kept. Simple File List's own files are not changed.
+3. Replace the `[eeSFL]` shortcode on your pages with `[mulino_documents]`.
+4. Check that everything is there, then deactivate and delete Simple File List.
+
+You can run the import again at any time; files that are already imported are skipped.
+
+= Can I get my documents out again? =
+
+Yes. **Export as ZIP** on the File Show screen downloads every document, sorted into the same folders as in the library.
 
 = Which options does the shortcode have? =
 
@@ -107,6 +126,15 @@ library. This may change in a future version.
 2. The public folder browser shown by the `[mulino_documents]` shortcode.
 
 == Changelog ==
+
+= 1.2.0 =
+* New: import from Simple File List under File Show > Import, with subfolders, names, descriptions and dates. See the FAQ.
+* New: drag a whole folder from your computer onto the upload area to upload it with all its subfolders. Folders that already exist are reused.
+* New: tick several documents to move them to another folder or to the trash in one go. Dragging one of the ticked documents onto a folder moves all of them.
+* New: "Export as ZIP" downloads the whole library with its folders.
+* Renaming or moving a folder no longer allows two folders with the same name side by side.
+* The rename buttons now use WordPress' own pencil icon, which is easier to recognise.
+* New action for developers: `mulino_after_import`.
 
 = 1.1.0 =
 * New shortcode options: `folder`, `folder_order`, `orderby`, `document_order` and `hide_empty`. See the FAQ.

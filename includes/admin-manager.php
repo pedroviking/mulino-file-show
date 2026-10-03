@@ -272,7 +272,7 @@ function mulino_render_manager_page() {
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Mulino file show', 'mulino-file-show' ); ?></h1>
-		<p><?php esc_html_e( 'Drag files onto the drop zone to upload them into the open folder. Drag a file card onto a folder on the left to move it.', 'mulino-file-show' ); ?></p>
+		<p><?php esc_html_e( 'Drag files or whole folders onto the drop zone to upload them into the open folder. Drag a file card onto a folder on the left to move it, or tick several cards to move or delete them together.', 'mulino-file-show' ); ?></p>
 
 		<?php
 		/**
@@ -289,8 +289,10 @@ function mulino_render_manager_page() {
 
 		<div id="mulino-manager">
 			<div class="mulino-tree-pane">
-				<button type="button" id="mulino-new-folder" class="button"><?php esc_html_e( '+ New folder', 'mulino-file-show' ); ?></button>
-				<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=mulino_export_zip' ), 'mulino_export_zip' ) ); ?>" id="mulino-export" class="button"><?php esc_html_e( 'Export as ZIP', 'mulino-file-show' ); ?></a>
+				<div class="mulino-tree-actions">
+					<button type="button" id="mulino-new-folder" class="button"><?php esc_html_e( '+ New folder', 'mulino-file-show' ); ?></button>
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=mulino_export_zip' ), 'mulino_export_zip' ) ); ?>" id="mulino-export" class="button"><?php esc_html_e( 'Export as ZIP', 'mulino-file-show' ); ?></a>
+				</div>
 				<ul class="mulino-tree" id="mulino-tree">
 					<li class="mulino-tree-item<?php echo ( 0 === $selected_id ) ? ' is-selected' : ''; ?>" data-term-id="0">
 						<a href="<?php echo esc_url( $root_url ); ?>" class="mulino-tree-link"><?php esc_html_e( 'All', 'mulino-file-show' ); ?></a>
@@ -304,7 +306,7 @@ function mulino_render_manager_page() {
 
 			<div class="mulino-files-pane">
 				<div id="mulino-dropzone" data-folder-id="<?php echo esc_attr( $selected_id ); ?>">
-					<p><?php esc_html_e( 'Drag files here to upload', 'mulino-file-show' ); ?></p>
+					<p><?php esc_html_e( 'Drag files or folders here to upload', 'mulino-file-show' ); ?></p>
 					<p class="mulino-dropzone-limit">
 						<?php
 						echo esc_html(

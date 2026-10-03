@@ -93,7 +93,6 @@ function mulino_find_folder( $name, $parent_id, $exclude_id = 0 ) {
 			'taxonomy'   => 'mulino_folder',
 			'parent'     => (int) $parent_id,
 			'hide_empty' => false,
-			'exclude'    => $exclude_id ? array( (int) $exclude_id ) : array(),
 		)
 	);
 	if ( is_wp_error( $siblings ) || ! is_array( $siblings ) ) {

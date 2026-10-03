@@ -90,7 +90,7 @@
 	}
 	.mulino-delete:hover { background: #d63638; color: #fff; }
 	.mulino-empty { font-style: italic; color: #777; }
-	#mulino-export { margin-top: 0.5em; }
+	.mulino-tree-actions { display: flex; flex-wrap: wrap; gap: 0.5em; }
 	.mulino-select {
 		position: absolute; top: 6px; left: 6px; margin: 0;
 		opacity: 0; transition: opacity .1s;

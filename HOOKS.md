@@ -7,9 +7,10 @@ can change between releases; these hooks are the stable, supported way in.
 
 ## Actions (something happened)
 
-All actions fire from `includes/admin-manager.php`, right before the
-AJAX response is sent, so a listener can safely read anything Mulino file show
-just wrote to the database.
+The actions fire after Mulino file show has written its changes to the
+database, so a listener can safely read them. Bulk actions fire the
+single-document action once per document, and `mulino_after_folder_created`
+also fires for folders created by a folder upload or an import.
 
 | Hook | Fires when | Arguments |
 |---|---|---|
@@ -21,6 +22,7 @@ just wrote to the database.
 | `mulino_after_folder_renamed` | A folder has been renamed | `$term_id, $name` |
 | `mulino_after_delete_doc` | A document has been moved to the trash | `$doc_id` |
 | `mulino_after_folder_deleted` | An (empty) folder has been deleted | `$term_id` |
+| `mulino_after_import` | A document has been imported from another plugin | `$post_id, $attachment_id, $folder_id, $source` (`$source` is e.g. `sfl:1:Minutes/2024.pdf`) |
 
 Example:
 

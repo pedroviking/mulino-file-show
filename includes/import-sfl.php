@@ -425,7 +425,7 @@ function mulino_render_import_page() {
 			<div id="mulino-import-status" aria-live="polite" hidden>
 				<p class="mulino-import-text"></p>
 				<progress class="mulino-import-progress" max="1" value="0" style="width: 100%; max-width: 40em;"></progress>
-				<ul class="mulino-import-errors"></ul>
+				<ul class="mulino-import-errors" style="color: #d63638;"></ul>
 			</div>
 			<div id="mulino-import-done" hidden>
 				<p>

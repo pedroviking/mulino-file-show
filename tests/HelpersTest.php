@@ -118,7 +118,6 @@ class HelpersTest extends MULINO_TestCase {
 					'taxonomy'   => 'mulino_folder',
 					'parent'     => 3,
 					'hide_empty' => false,
-					'exclude'    => array( 9 ),
 				)
 			)
 			->andReturn( array() );
