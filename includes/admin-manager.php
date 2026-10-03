@@ -45,7 +45,7 @@ function mulino_enqueue_manager_assets( $hook ) {
 	wp_enqueue_style(
 		'mulino-manager-assets',
 		MULINO_URL . 'assets/css/admin-manager.css',
-		array(),
+		array( 'dashicons' ),
 		MULINO_VERSION
 	);
 
@@ -122,7 +122,7 @@ function mulino_render_folder_tree( $parent_id, $selected_id ) {
 		$out   .= '<li class="mulino-tree-item' . esc_attr( $is_sel ) . '" data-term-id="' . esc_attr( $term->term_id ) . '">';
 		$out   .= '<span class="mulino-tree-row" draggable="true">';
 		$out   .= '<a href="' . esc_url( $url ) . '" class="mulino-tree-link" draggable="false" data-term-name="' . esc_attr( $term->name ) . '">' . esc_html( $term->name ) . '</a>';
-		$out   .= '<button type="button" class="mulino-tree-rename" data-term-id="' . esc_attr( $term->term_id ) . '" title="' . esc_attr__( 'Rename folder', 'mulino-file-show' ) . '">&#9998;</button>';
+		$out   .= '<button type="button" class="mulino-tree-rename dashicons dashicons-edit" data-term-id="' . esc_attr( $term->term_id ) . '" title="' . esc_attr__( 'Rename folder', 'mulino-file-show' ) . '" aria-label="' . esc_attr__( 'Rename folder', 'mulino-file-show' ) . '"></button>';
 		$out   .= '<button type="button" class="mulino-tree-delete" data-term-id="' . esc_attr( $term->term_id ) . '" title="' . esc_attr__( 'Delete folder', 'mulino-file-show' ) . '">&times;</button>';
 		$out   .= '</span>';
 		$out   .= mulino_render_folder_tree( $term->term_id, $selected_id );
@@ -205,7 +205,7 @@ function mulino_render_one_manager_card( $doc ) {
 	return '<div class="mulino-card mulino-manager-card" draggable="true" data-doc-id="' . esc_attr( $doc->ID ) . '" data-doc-name="' . esc_attr( get_the_title( $doc ) ) . '">'
 		. mulino_file_icon_svg( $icon['label'], $icon['color'] )
 		. '<span class="mulino-name">' . esc_html( get_the_title( $doc ) ) . '</span>'
-		. '<button type="button" class="mulino-rename" data-doc-id="' . esc_attr( $doc->ID ) . '" title="' . esc_attr__( 'Rename', 'mulino-file-show' ) . '">&#9998;</button>'
+		. '<button type="button" class="mulino-rename dashicons dashicons-edit" data-doc-id="' . esc_attr( $doc->ID ) . '" title="' . esc_attr__( 'Rename', 'mulino-file-show' ) . '" aria-label="' . esc_attr__( 'Rename', 'mulino-file-show' ) . '"></button>'
 		. '<button type="button" class="mulino-delete" data-doc-id="' . esc_attr( $doc->ID ) . '" title="' . esc_attr__( 'Delete', 'mulino-file-show' ) . '">&times;</button>'
 		. wp_kses_post( $extra_actions )
 		. '</div>';

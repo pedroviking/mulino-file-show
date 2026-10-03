@@ -47,9 +47,9 @@
 		cursor: pointer; font-size: 14px; padding: 0; opacity: 0; transition: opacity .1s;
 	}
 	.mulino-tree-rename {
-		flex-shrink: 0; width: 20px; height: 20px; line-height: 18px; margin-right: 0.15em;
+		flex-shrink: 0; width: 20px; height: 20px; line-height: 20px; margin-right: 0.15em;
 		border: none; border-radius: 50%; background: transparent; color: #999;
-		cursor: pointer; font-size: 12px; padding: 0; opacity: 0; transition: opacity .1s;
+		cursor: pointer; font-size: 15px; padding: 0; opacity: 0; transition: opacity .1s;
 	}
 	.mulino-tree-row:hover .mulino-tree-delete,
 	.mulino-tree-row:hover .mulino-tree-rename { opacity: 1; }
@@ -77,9 +77,9 @@
 	.mulino-manager-card.is-dragging { opacity: 0.4; }
 	.mulino-rename {
 		position: absolute; top: 4px; right: 26px;
-		width: 20px; height: 20px; line-height: 18px;
+		width: 20px; height: 20px; line-height: 20px;
 		border: none; border-radius: 50%; background: #e5e5e5; color: #555;
-		cursor: pointer; font-size: 12px; padding: 0;
+		cursor: pointer; font-size: 15px; padding: 0;
 	}
 	.mulino-rename:hover { background: #2271b1; color: #fff; }
 	.mulino-delete {
