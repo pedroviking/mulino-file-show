@@ -93,7 +93,8 @@ function mulino_enqueue_manager_assets( $hook ) {
 				'couldNotCreatePath'   => __( 'Could not create the folder %s.', 'mulino-file-show' ),
 				/* translators: %d: number of selected documents. */
 				'selectedCount'        => __( '%d selected', 'mulino-file-show' ),
-				/* translators: %d: number of selected documents. */
+				'bulkDeleteConfirmOne' => __( 'Move the selected document to the trash?', 'mulino-file-show' ),
+				/* translators: %d: number of selected documents (always more than one). */
 				'bulkDeleteConfirm'    => __( 'Move %d documents to the trash?', 'mulino-file-show' ),
 			),
 		)

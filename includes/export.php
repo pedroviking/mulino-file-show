@@ -115,7 +115,12 @@ function mulino_write_export_zip( $zip_path ) {
 	}
 
 	$plan = mulino_export_plan();
-	$zip  = new ZipArchive();
+	if ( ! $plan['folders'] && ! $plan['files'] && ! $plan['missing'] ) {
+		// ZipArchive writes no file at all for an empty archive.
+		return new WP_Error( 'mulino_zip_empty', __( 'There is nothing to export yet: the library has no folders or documents.', 'mulino-file-show' ) );
+	}
+
+	$zip = new ZipArchive();
 	if ( true !== $zip->open( $zip_path, ZipArchive::CREATE | ZipArchive::OVERWRITE ) ) {
 		return new WP_Error( 'mulino_zip_open', __( 'Could not create the ZIP file.', 'mulino-file-show' ) );
 	}

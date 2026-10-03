@@ -523,7 +523,7 @@
 	} );
 	document.getElementById( 'mulino-bulk-delete' ).addEventListener( 'click', function () {
 		var ids = selectedIds();
-		if ( ! ids.length || ! confirm( format( i18n.bulkDeleteConfirm, ids.length ) ) ) {
+		if ( ! ids.length || ! confirm( 1 === ids.length ? i18n.bulkDeleteConfirmOne : format( i18n.bulkDeleteConfirm, ids.length ) ) ) {
 			return;
 		}
 		postAjax( { action: 'mulino_bulk_delete', doc_ids: ids } ).then( function ( json ) {

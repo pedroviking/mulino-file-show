@@ -142,14 +142,14 @@ function mulino_sfl_is_imported( $list_id, $path ) {
 }
 
 /**
- * Number of documents that have been imported from SFL so far.
+ * Whether anything has been imported from SFL yet.
  */
-function mulino_sfl_imported_count() {
+function mulino_sfl_has_imports() {
 	$found = get_posts(
 		array(
 			'post_type'      => 'mulino_document',
 			'post_status'    => array( 'publish', 'draft', 'private', 'trash' ),
-			'posts_per_page' => -1,
+			'posts_per_page' => 1,
 			'fields'         => 'ids',
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 			'meta_key'       => '_mulino_import_source',
@@ -159,7 +159,7 @@ function mulino_sfl_imported_count() {
 			'meta_value'     => 'sfl:',
 		)
 	);
-	return count( $found );
+	return ! empty( $found );
 }
 
 /**
@@ -443,7 +443,7 @@ function mulino_render_import_page() {
  * site has SFL files and none of them have been imported yet.
  */
 function mulino_sfl_import_notice() {
-	if ( ! current_user_can( 'upload_files' ) || ! mulino_sfl_lists() || mulino_sfl_imported_count() > 0 ) {
+	if ( ! current_user_can( 'upload_files' ) || ! mulino_sfl_lists() || mulino_sfl_has_imports() ) {
 		return;
 	}
 	printf(
