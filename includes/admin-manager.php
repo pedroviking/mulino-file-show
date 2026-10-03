@@ -449,6 +449,10 @@ function mulino_ajax_move_folder() {
 		}
 	}
 
+	if ( mulino_folder_name_exists( $term->name, $new_parent_id, $term_id ) ) {
+		wp_send_json_error( array( 'message' => __( 'The target folder already contains a folder with this name.', 'mulino-file-show' ) ) );
+	}
+
 	$result = wp_update_term( $term_id, 'mulino_folder', array( 'parent' => $new_parent_id ) );
 	if ( is_wp_error( $result ) ) {
 		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
@@ -513,6 +517,10 @@ function mulino_ajax_rename_folder() {
 	$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 	if ( ! $name ) {
 		wp_send_json_error( array( 'message' => __( 'Folder name cannot be empty.', 'mulino-file-show' ) ) );
+	}
+
+	if ( mulino_folder_name_exists( $name, $term->parent, $term_id ) ) {
+		wp_send_json_error( array( 'message' => __( 'A folder with this name already exists here.', 'mulino-file-show' ) ) );
 	}
 
 	$result = wp_update_term( $term_id, 'mulino_folder', array( 'name' => $name ) );

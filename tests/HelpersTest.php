@@ -79,4 +79,50 @@ class HelpersTest extends MULINO_TestCase {
 		$this->assertStringContainsString( 'PDF', $svg );
 		$this->assertStringContainsString( '#e2574c', $svg );
 	}
+
+	protected function mock_sibling_folders( array $siblings ) {
+		WP_Mock::userFunction( 'get_terms' )->andReturn( $siblings );
+	}
+
+	public function test_folder_name_exists_finds_a_sibling_with_the_same_name() {
+		$this->mock_sibling_folders( array( $this->make_term( 5, '2024', '2024' ) ) );
+
+		$this->assertTrue( mulino_folder_name_exists( '2024', 3, 9 ) );
+	}
+
+	public function test_folder_name_exists_ignores_case_and_entities() {
+		$this->mock_sibling_folders( array( $this->make_term( 5, 'Referater &amp; Regnskab', 'referater-regnskab' ) ) );
+
+		$this->assertTrue( mulino_folder_name_exists( 'referater & regnskab', 3, 9 ) );
+	}
+
+	public function test_folder_name_exists_ignores_the_folder_itself() {
+		// Renaming "2024" to "2024 " (or just changing its case) must not
+		// be refused because of the folder's own current name.
+		$this->mock_sibling_folders( array( $this->make_term( 9, '2024', '2024' ) ) );
+
+		$this->assertFalse( mulino_folder_name_exists( '2024', 3, 9 ) );
+	}
+
+	public function test_folder_name_exists_is_false_for_a_new_name() {
+		$this->mock_sibling_folders( array( $this->make_term( 5, '2023', '2023' ) ) );
+
+		$this->assertFalse( mulino_folder_name_exists( '2024', 3, 9 ) );
+	}
+
+	public function test_folder_name_exists_only_asks_for_direct_children_of_the_parent() {
+		WP_Mock::userFunction( 'get_terms' )
+			->once()
+			->with(
+				array(
+					'taxonomy'   => 'mulino_folder',
+					'parent'     => 3,
+					'hide_empty' => false,
+					'exclude'    => array( 9 ),
+				)
+			)
+			->andReturn( array() );
+
+		$this->assertFalse( mulino_folder_name_exists( '2024', 3, 9 ) );
+	}
 }

@@ -74,3 +74,44 @@ function mulino_natural_sort( $items, $key, $order = 'asc' ) {
 
 	return $items;
 }
+
+/**
+ * Whether a folder with this name already sits directly under $parent_id.
+ *
+ * wp_insert_term() refuses such duplicates, but wp_update_term() does
+ * not, so renaming or moving a folder could otherwise create two
+ * sibling folders with the same name. The comparison ignores case,
+ * like WordPress' own check when a folder is created.
+ *
+ * @param string $name       The folder name to look for.
+ * @param int    $parent_id  The parent folder's term ID, or 0 for top-level.
+ * @param int    $exclude_id A folder to ignore (the one being renamed or moved).
+ * @return bool
+ */
+function mulino_folder_name_exists( $name, $parent_id, $exclude_id = 0 ) {
+	$siblings = get_terms(
+		array(
+			'taxonomy'   => 'mulino_folder',
+			'parent'     => (int) $parent_id,
+			'hide_empty' => false,
+			'exclude'    => $exclude_id ? array( (int) $exclude_id ) : array(),
+		)
+	);
+	if ( is_wp_error( $siblings ) || ! is_array( $siblings ) ) {
+		return false;
+	}
+
+	$normalize = function ( $text ) {
+		$text = trim( html_entity_decode( (string) $text, ENT_QUOTES, 'UTF-8' ) );
+		return function_exists( 'mb_strtolower' ) ? mb_strtolower( $text, 'UTF-8' ) : strtolower( $text );
+	};
+
+	$wanted = $normalize( $name );
+	foreach ( $siblings as $sibling ) {
+		if ( (int) $sibling->term_id !== (int) $exclude_id && $normalize( $sibling->name ) === $wanted ) {
+			return true;
+		}
+	}
+
+	return false;
+}
