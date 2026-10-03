@@ -90,3 +90,22 @@
 	}
 	.mulino-delete:hover { background: #d63638; color: #fff; }
 	.mulino-empty { font-style: italic; color: #777; }
+	#mulino-export { margin-top: 0.5em; }
+	.mulino-select {
+		position: absolute; top: 6px; left: 6px; margin: 0;
+		opacity: 0; transition: opacity .1s;
+	}
+	.mulino-manager-card:hover .mulino-select,
+	.mulino-select:focus,
+	.mulino-select:checked,
+	.mulino-bulk-bar.has-selection ~ .mulino-grid .mulino-select { opacity: 1; }
+	.mulino-manager-card.is-selected { border-color: #2271b1; box-shadow: 0 0 0 1px #2271b1; background: #f0f6fc; }
+	.mulino-bulk-bar {
+		display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em 1em;
+		margin: 0 0 1em; min-height: 30px;
+	}
+	.mulino-bulk-bar[hidden] { display: none; }
+	.mulino-selected-count { font-weight: 600; }
+	.mulino-bulk-actions { display: none; align-items: center; gap: 0.5em; flex-wrap: wrap; }
+	.mulino-bulk-bar.has-selection .mulino-bulk-actions { display: inline-flex; }
+	.mulino-bulk-actions select { max-width: 16em; }

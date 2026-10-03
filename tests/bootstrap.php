@@ -70,3 +70,4 @@ if ( ! function_exists( 'add_meta_box' ) ) {
 
 require_once dirname( __DIR__ ) . '/includes/helpers.php';
 require_once dirname( __DIR__ ) . '/includes/shortcode.php';
+require_once dirname( __DIR__ ) . '/includes/import-sfl.php';

@@ -76,19 +76,18 @@ function mulino_natural_sort( $items, $key, $order = 'asc' ) {
 }
 
 /**
- * Whether a folder with this name already sits directly under $parent_id.
+ * Find the folder with this name directly under $parent_id.
  *
- * wp_insert_term() refuses such duplicates, but wp_update_term() does
- * not, so renaming or moving a folder could otherwise create two
- * sibling folders with the same name. The comparison ignores case,
- * like WordPress' own check when a folder is created.
+ * The comparison ignores case, like WordPress' own duplicate check
+ * when a folder is created, and HTML entities (WordPress stores "&"
+ * in a term name as "&amp;").
  *
  * @param string $name       The folder name to look for.
  * @param int    $parent_id  The parent folder's term ID, or 0 for top-level.
- * @param int    $exclude_id A folder to ignore (the one being renamed or moved).
- * @return bool
+ * @param int    $exclude_id A folder to ignore (e.g. the one being renamed or moved).
+ * @return int The matching folder's term ID, or 0 if there is none.
  */
-function mulino_folder_name_exists( $name, $parent_id, $exclude_id = 0 ) {
+function mulino_find_folder( $name, $parent_id, $exclude_id = 0 ) {
 	$siblings = get_terms(
 		array(
 			'taxonomy'   => 'mulino_folder',
@@ -98,7 +97,7 @@ function mulino_folder_name_exists( $name, $parent_id, $exclude_id = 0 ) {
 		)
 	);
 	if ( is_wp_error( $siblings ) || ! is_array( $siblings ) ) {
-		return false;
+		return 0;
 	}
 
 	$normalize = function ( $text ) {
@@ -109,9 +108,105 @@ function mulino_folder_name_exists( $name, $parent_id, $exclude_id = 0 ) {
 	$wanted = $normalize( $name );
 	foreach ( $siblings as $sibling ) {
 		if ( (int) $sibling->term_id !== (int) $exclude_id && $normalize( $sibling->name ) === $wanted ) {
-			return true;
+			return (int) $sibling->term_id;
 		}
 	}
 
-	return false;
+	return 0;
+}
+
+/**
+ * Whether a folder with this name already sits directly under $parent_id.
+ *
+ * wp_insert_term() refuses such duplicates, but wp_update_term() does
+ * not, so renaming or moving a folder could otherwise create two
+ * sibling folders with the same name.
+ *
+ * @param string $name       The folder name to look for.
+ * @param int    $parent_id  The parent folder's term ID, or 0 for top-level.
+ * @param int    $exclude_id A folder to ignore (the one being renamed or moved).
+ * @return bool
+ */
+function mulino_folder_name_exists( $name, $parent_id, $exclude_id = 0 ) {
+	return mulino_find_folder( $name, $parent_id, $exclude_id ) > 0;
+}
+
+/**
+ * Walk down a path of folder names from $parent_id, reusing folders that
+ * already exist and creating the ones that don't. Used when a whole
+ * folder is dragged in from the computer and when importing from
+ * another plugin, so "Minutes/2024" ends up in the existing "Minutes"
+ * folder instead of a second one.
+ *
+ * @param string[] $names     Folder names from the top down, e.g. array( 'Minutes', '2024' ).
+ * @param int      $parent_id Where the path starts, or 0 for top-level.
+ * @return int|WP_Error The term ID of the last folder in the path, or
+ *                      $parent_id itself for an empty path.
+ */
+function mulino_ensure_folder_path( $names, $parent_id = 0 ) {
+	$parent_id = (int) $parent_id;
+
+	foreach ( (array) $names as $name ) {
+		$name = sanitize_text_field( (string) $name );
+		if ( '' === $name ) {
+			continue;
+		}
+
+		$existing = mulino_find_folder( $name, $parent_id );
+		if ( $existing ) {
+			$parent_id = $existing;
+			continue;
+		}
+
+		$result = wp_insert_term( $name, 'mulino_folder', array( 'parent' => $parent_id ) );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		/** This action is documented in includes/admin-manager.php */
+		do_action( 'mulino_after_folder_created', (int) $result['term_id'], $parent_id );
+
+		$parent_id = (int) $result['term_id'];
+	}
+
+	return $parent_id;
+}
+
+/**
+ * Make a folder or document name safe to use as a name inside a ZIP
+ * file on Windows, macOS and Linux alike: characters that are not
+ * allowed in file names become "-", and leading/trailing dots and
+ * spaces are dropped (Windows can't open folders ending in a dot).
+ *
+ * @param string $name     The folder or document name.
+ * @param string $fallback Used if nothing is left of $name.
+ * @return string
+ */
+function mulino_zip_safe_name( $name, $fallback ) {
+	$name = html_entity_decode( (string) $name, ENT_QUOTES, 'UTF-8' );
+	$name = preg_replace( '/[\x00-\x1f\\\\\/:*?"<>|]+/u', '-', $name );
+	$name = trim( (string) $name, " .\t" );
+	return '' === $name ? $fallback : $name;
+}
+
+/**
+ * Return $name, or "$name (2)", "$name (3)" ... if it's already in
+ * $used, and remember the result. Case-insensitive, because Windows
+ * and macOS treat "Minutes" and "minutes" as the same folder.
+ *
+ * @param string $name      e.g. "Minutes" or "Budget.pdf".
+ * @param array  $used      Names already taken in the same ZIP folder (by reference; may start out null).
+ * @param string $extension Kept after the counter, e.g. "pdf" gives "Budget (2).pdf".
+ * @return string
+ */
+function mulino_unique_name( $name, &$used, $extension = '' ) {
+	$suffix    = '' === $extension ? '' : '.' . $extension;
+	$candidate = $name . $suffix;
+	$counter   = 2;
+	while ( isset( $used[ strtolower( $candidate ) ] ) ) {
+		$candidate = $name . ' (' . $counter . ')' . $suffix;
+		++$counter;
+	}
+	$used[ strtolower( $candidate ) ] = true;
+	return $candidate;
 }

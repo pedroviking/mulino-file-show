@@ -125,4 +125,46 @@ class HelpersTest extends MULINO_TestCase {
 
 		$this->assertFalse( mulino_folder_name_exists( '2024', 3, 9 ) );
 	}
+
+	public function test_ensure_folder_path_reuses_existing_folders_and_creates_the_rest() {
+		// "Minutes" exists at the top level (ID 5), "2024" doesn't exist in it yet.
+		WP_Mock::userFunction( 'get_terms' )->andReturnUsing(
+			function ( $args ) {
+				return 0 === $args['parent'] ? array( $this->make_term( 5, 'Minutes', 'minutes' ) ) : array();
+			}
+		);
+		WP_Mock::passthruFunction( 'sanitize_text_field' );
+		WP_Mock::userFunction( 'wp_insert_term' )
+			->once()
+			->with( '2024', 'mulino_folder', array( 'parent' => 5 ) )
+			->andReturn( array( 'term_id' => 9 ) );
+		WP_Mock::expectAction( 'mulino_after_folder_created', 9, 5 );
+
+		$this->assertSame( 9, mulino_ensure_folder_path( array( 'minutes', '2024' ), 0 ) );
+	}
+
+	public function test_ensure_folder_path_with_no_names_returns_the_parent() {
+		WP_Mock::passthruFunction( 'sanitize_text_field' );
+
+		$this->assertSame( 7, mulino_ensure_folder_path( array( '', '' ), 7 ) );
+	}
+
+	public function test_zip_safe_name_replaces_characters_windows_forbids() {
+		$this->assertSame( 'Budget 2024-25 - draft', mulino_zip_safe_name( 'Budget 2024/25 : draft', 'x' ) );
+		$this->assertSame( 'Q&A', mulino_zip_safe_name( 'Q&amp;A', 'x' ) );
+	}
+
+	public function test_zip_safe_name_drops_trailing_dots_and_falls_back_when_empty() {
+		$this->assertSame( 'Notes', mulino_zip_safe_name( 'Notes...', 'x' ) );
+		$this->assertSame( 'folder', mulino_zip_safe_name( '..', 'folder' ) );
+	}
+
+	public function test_unique_name_numbers_duplicates_case_insensitively() {
+		$used = null;
+
+		$this->assertSame( 'Minutes.pdf', mulino_unique_name( 'Minutes', $used, 'pdf' ) );
+		$this->assertSame( 'minutes (2).pdf', mulino_unique_name( 'minutes', $used, 'pdf' ) );
+		$this->assertSame( 'Minutes (3).pdf', mulino_unique_name( 'Minutes', $used, 'pdf' ) );
+		$this->assertSame( 'Minutes', mulino_unique_name( 'Minutes', $used ) );
+	}
 }

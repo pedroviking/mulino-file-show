@@ -25,9 +25,13 @@ define( 'MULINO_VERSION', '1.1.0' );
  *  - shortcode.php     [mulino_documents] frontend browser
  *  - admin-manager.php the "Mulino file show" admin screen + its AJAX endpoints
  *  - settings.php      the delete-data-on-uninstall setting (Settings > Media)
+ *  - export.php        "Export as ZIP" of the whole library
+ *  - import-sfl.php    import from the Simple File List plugin
  */
 require_once MULINO_PATH . 'includes/helpers.php';
 require_once MULINO_PATH . 'includes/post-type.php';
 require_once MULINO_PATH . 'includes/shortcode.php';
 require_once MULINO_PATH . 'includes/admin-manager.php';
 require_once MULINO_PATH . 'includes/settings.php';
+require_once MULINO_PATH . 'includes/export.php';
+require_once MULINO_PATH . 'includes/import-sfl.php';
