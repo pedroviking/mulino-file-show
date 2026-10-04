@@ -365,7 +365,7 @@
 		}
 		var li = e.target.closest( '.mulino-tree-item' );
 		if ( ! li || '0' === li.getAttribute( 'data-term-id' ) ) {
-			return; // the "All" root row isn't a real, movable term
+			return; // the "Top level" root row isn't a real, movable term
 		}
 		e.target.classList.add( 'is-dragging' );
 		e.dataTransfer.setData( 'text/plain', 'folder:' + li.getAttribute( 'data-term-id' ) );
@@ -455,7 +455,7 @@
 		} );
 		if ( ! grid.querySelector( '.mulino-manager-card' ) && ! grid.querySelector( '.mulino-empty' ) ) {
 			grid.innerHTML = '<p class="mulino-empty"></p>';
-			grid.querySelector( '.mulino-empty' ).textContent = i18n.noDocuments;
+			grid.querySelector( '.mulino-empty' ).textContent = '0' === ( dropzone.getAttribute( 'data-folder-id' ) || '0' ) ? i18n.noTopLevelDocuments : i18n.noDocuments;
 		}
 		updateSelection();
 	}

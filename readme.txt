@@ -134,6 +134,7 @@ library. This may change in a future version.
 * New: "Export as ZIP" downloads the whole library with its folders.
 * Renaming or moving a folder no longer allows two folders with the same name side by side.
 * The rename buttons now use WordPress' own pencil icon, which is easier to recognise.
+* In the admin screen, "All" is now called "Top level", because it shows the documents that aren't in any folder, not all documents.
 * New action for developers: `mulino_after_import`.
 
 = 1.1.0 =

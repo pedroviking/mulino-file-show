@@ -80,6 +80,7 @@ function mulino_enqueue_manager_assets( $hook ) {
 				'deleteDocConfirm'     => __( 'Move this document to the trash?', 'mulino-file-show' ),
 				'couldNotDelete'       => __( 'Could not delete.', 'mulino-file-show' ),
 				'noDocuments'          => __( 'No documents here yet. Drag files onto the drop zone above.', 'mulino-file-show' ),
+				'noTopLevelDocuments'  => __( 'No documents at the top level. Open a folder on the left to see its documents, or drag files onto the drop zone above.', 'mulino-file-show' ),
 				'couldNotMoveDoc'      => __( 'Could not move document.', 'mulino-file-show' ),
 				'couldNotMoveFolder'   => __( 'Could not move folder.', 'mulino-file-show' ),
 				'newFolderPrompt'      => __( 'New folder name:', 'mulino-file-show' ),
@@ -181,7 +182,10 @@ function mulino_render_manager_cards( $term ) {
 	);
 
 	if ( empty( $docs ) ) {
-		return '<p class="mulino-empty">' . esc_html__( 'No documents here yet. Drag files onto the drop zone above.', 'mulino-file-show' ) . '</p>';
+		$message = $term
+			? __( 'No documents here yet. Drag files onto the drop zone above.', 'mulino-file-show' )
+			: __( 'No documents at the top level. Open a folder on the left to see its documents, or drag files onto the drop zone above.', 'mulino-file-show' );
+		return '<p class="mulino-empty">' . esc_html( $message ) . '</p>';
 	}
 
 	$out = '';
@@ -296,7 +300,7 @@ function mulino_render_manager_page() {
 				</div>
 				<ul class="mulino-tree" id="mulino-tree">
 					<li class="mulino-tree-item<?php echo ( 0 === $selected_id ) ? ' is-selected' : ''; ?>" data-term-id="0">
-						<a href="<?php echo esc_url( $root_url ); ?>" class="mulino-tree-link"><?php esc_html_e( 'All', 'mulino-file-show' ); ?></a>
+						<a href="<?php echo esc_url( $root_url ); ?>" class="mulino-tree-link"><?php esc_html_e( 'Top level', 'mulino-file-show' ); ?></a>
 						<?php
 						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each value is escaped individually inside this function before being concatenated into the returned HTML string.
 						echo mulino_render_folder_tree( 0, $selected_id );
