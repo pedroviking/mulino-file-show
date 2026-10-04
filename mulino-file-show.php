@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Mulino file show
  * Description:       Nested-folder document library (e.g. Decade > Year) with drag-and-drop admin upload and a frontend breadcrumb browser shortcode [mulino_documents].
- * Version:           1.2.0
+ * Version:           1.2.1
  * Requires at least: 5.9
  * Requires PHP:      7.4
  * Author:            Peder Møller
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'MULINO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MULINO_URL', plugin_dir_url( __FILE__ ) );
-define( 'MULINO_VERSION', '1.2.0' );
+define( 'MULINO_VERSION', '1.2.1' );
 
 /**
  * Module map, in load order:

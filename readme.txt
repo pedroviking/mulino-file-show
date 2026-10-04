@@ -4,7 +4,7 @@ Tags: documents, files, folders, file manager, document library
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,7 +20,7 @@ with a single shortcode.
 
 **Admin features**
 
-* Drag and drop files straight from your computer to upload them into a folder
+* Drag and drop files straight from your computer to upload them into a folder, or use the "Choose files" button (also on phones and tablets)
 * Drag a whole folder from your computer to upload it with all its subfolders
 * Drag existing documents or whole folders to re-file them
 * Tick several documents to move them or move them to the trash together
@@ -126,6 +126,10 @@ library. This may change in a future version.
 2. The public folder browser shown by the `[mulino_documents]` shortcode.
 
 == Changelog ==
+
+= 1.2.1 =
+* New "Choose files" button in the upload area, so documents can also be uploaded from phones and tablets, where dragging and dropping isn't possible, and with the keyboard.
+* On phones and tablets, the folder tree is now shown above the documents, and the tick boxes and the rename and delete buttons are always visible (they used to appear only when hovering with a mouse).
 
 = 1.2.0 =
 * New: import from Simple File List under File Show > Import, with subfolders, names, descriptions and dates. See the FAQ.

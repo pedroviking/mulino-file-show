@@ -56,6 +56,24 @@
 		} );
 	} );
 
+	// --- Upload via the "Choose files" button, for phones and tablets
+	// (which can't drag and drop) and for keyboard users ---
+	var fileInput = document.getElementById( 'mulino-file-input' );
+	document.getElementById( 'mulino-choose-files' ).addEventListener( 'click', function () {
+		fileInput.click();
+	} );
+	fileInput.addEventListener( 'change', function () {
+		var currentFolder = dropzone.getAttribute( 'data-folder-id' ) || '0';
+		var items = Array.prototype.map.call( fileInput.files, function ( file ) {
+			return { file: file, folderId: currentFolder, dir: '' };
+		} );
+		fileInput.value = ''; // so choosing the same file again still fires "change"
+		if ( items.length ) {
+			document.querySelector( '#mulino-upload-status .mulino-upload-errors' ).innerHTML = '';
+			uploadFiles( items, currentFolder, false );
+		}
+	} );
+
 	// Files the operating system leaves in folders that nobody means to upload.
 	function isJunkFile( name ) {
 		return '.' === name.charAt( 0 ) || /^(thumbs\.db|desktop\.ini)$/i.test( name );

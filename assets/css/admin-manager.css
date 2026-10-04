@@ -66,6 +66,7 @@
 		background: #fafafa;
 	}
 	#mulino-dropzone.is-dragover { border-color: #2271b1; background: #eef6fc; color: #2271b1; }
+	#mulino-dropzone p { margin: 0.25em 0; }
 	#mulino-dropzone .mulino-dropzone-limit { margin: 0.25em 0 0; font-size: 0.9em; color: #888; }
 	.mulino-upload-status { margin: -0.75em 0 1.5em; padding: 0.75em 1em; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; }
 	.mulino-upload-status[hidden] { display: none; }
@@ -109,3 +110,15 @@
 	.mulino-bulk-actions { display: none; align-items: center; gap: 0.5em; flex-wrap: wrap; }
 	.mulino-bulk-bar.has-selection .mulino-bulk-actions { display: inline-flex; }
 	.mulino-bulk-actions select { max-width: 16em; }
+	/* Phones and narrow tablets: tree above the documents instead of beside them. */
+	@media (max-width: 782px) {
+		#mulino-manager { flex-direction: column; gap: 1.5em; }
+		.mulino-tree-pane,
+		.mulino-files-pane { width: auto; align-self: stretch; box-sizing: border-box; min-width: 0; }
+	}
+	/* Touch screens have no hover, so show what is otherwise revealed on hover. */
+	@media (hover: none) {
+		.mulino-select,
+		.mulino-tree-rename,
+		.mulino-tree-delete { opacity: 1; }
+	}

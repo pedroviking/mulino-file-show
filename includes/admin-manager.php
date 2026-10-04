@@ -311,7 +311,11 @@ function mulino_render_manager_page() {
 
 			<div class="mulino-files-pane">
 				<div id="mulino-dropzone" data-folder-id="<?php echo esc_attr( $selected_id ); ?>">
-					<p><?php esc_html_e( 'Drag files or folders here to upload', 'mulino-file-show' ); ?></p>
+					<p><?php esc_html_e( 'Drag files or folders here to upload, or', 'mulino-file-show' ); ?></p>
+					<p>
+						<button type="button" id="mulino-choose-files" class="button"><?php esc_html_e( 'Choose files', 'mulino-file-show' ); ?></button>
+						<input type="file" id="mulino-file-input" multiple hidden />
+					</p>
 					<p class="mulino-dropzone-limit">
 						<?php
 						echo esc_html(
