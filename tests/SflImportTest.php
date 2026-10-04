@@ -1,8 +1,27 @@
 <?php
 
+// A stand-in for what sanitize_text_field() does to tags.
+function wp_strip_all_tags_stub( $text ) {
+	return preg_replace( '/<[^>]*>/', '', (string) $text );
+}
+
 require_once __DIR__ . '/TestCase.php';
 
 class SflImportTest extends MULINO_TestCase {
+
+	public function setUp(): void {
+		parent::setUp();
+		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnUsing(
+			function ( $text ) {
+				return trim( wp_strip_all_tags_stub( $text ) );
+			}
+		);
+		WP_Mock::passthruFunction( 'sanitize_file_name' );
+	}
+
+	public function test_title_strips_html_from_the_nice_name() {
+		$this->assertSame( 'Minutes', mulino_sfl_title( 'minutes.pdf', '<img src=x onerror=alert(1)>Minutes.pdf' ) );
+	}
 
 	public function test_title_prefers_the_nice_name_without_extension() {
 		$this->assertSame( 'Minutes March 2024', mulino_sfl_title( 'minutes-march-2024.pdf', 'Minutes March 2024.pdf' ) );

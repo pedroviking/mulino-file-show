@@ -68,17 +68,23 @@ function mulino_sfl_normalize_items( $raw ) {
  * what SFL showed visitors), otherwise the file name -- in both cases
  * without the file extension, like a normal WordPress upload.
  *
+ * Both come from whoever uploaded the file, which on many SFL sites
+ * was any visitor, and SFL 6.3.11 has an unfixed stored-XSS hole, so
+ * any HTML is stripped (administrators may otherwise save raw HTML
+ * in a post title).
+ *
  * @param string $path      FilePath, e.g. "Minutes/2024-03-minutes.pdf".
  * @param string $nice_name FileNiceName, may be empty.
  * @return string
  */
 function mulino_sfl_title( $path, $nice_name ) {
-	$name      = '' !== trim( $nice_name ) ? trim( $nice_name ) : basename( $path );
+	$nice_name = sanitize_text_field( $nice_name );
+	$name      = '' !== $nice_name ? $nice_name : sanitize_text_field( basename( $path ) );
 	$extension = pathinfo( $path, PATHINFO_EXTENSION );
 	if ( '' !== $extension && strtolower( substr( $name, -strlen( $extension ) - 1 ) ) === '.' . strtolower( $extension ) ) {
 		$name = substr( $name, 0, -strlen( $extension ) - 1 );
 	}
-	return '' === $name ? basename( $path ) : $name;
+	return '' === $name ? sanitize_file_name( basename( $path ) ) : $name;
 }
 
 /**
