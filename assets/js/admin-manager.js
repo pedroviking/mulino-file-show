@@ -297,7 +297,9 @@
 				} else if ( json && json.data && json.data.message ) {
 					addError( label + ': ' + json.data.message );
 				} else if ( xhr.status >= 400 ) {
-					addError( label + ': ' + format( i18n.serverRejected, xhr.status ) );
+					// 413 is "too large"; 5xx means the server gave up while
+					// working on the file, typically making image sizes.
+					addError( label + ': ' + format( xhr.status >= 500 ? i18n.serverError : i18n.serverRejected, xhr.status ) );
 				} else {
 					addError( label + ': ' + i18n.uploadFailed );
 				}

@@ -209,3 +209,20 @@ function mulino_unique_name( $name, &$used, $extension = '' ) {
 	$used[ strtolower( $candidate ) ] = true;
 	return $candidate;
 }
+
+/**
+ * For the rest of this request, store uploaded images as they are,
+ * without WordPress' extra image sizes (thumbnails, medium, large ...)
+ * or its scaled-down copy of very large photos.
+ *
+ * The library shows file-type icons, not thumbnails, so those sizes
+ * are never used here. Making them for a 12-48 megapixel phone photo
+ * can take longer than a shared web host allows: the server then
+ * answers 503 after the file is already in the Media Library, but
+ * before the document is created. PDFs get no preview images either.
+ */
+function mulino_skip_image_sizes() {
+	add_filter( 'intermediate_image_sizes_advanced', '__return_empty_array', 99 );
+	add_filter( 'fallback_intermediate_image_sizes', '__return_empty_array', 99 );
+	add_filter( 'big_image_size_threshold', '__return_false', 99 );
+}

@@ -75,6 +75,8 @@ function mulino_enqueue_manager_assets( $hook ) {
 				'uploadSummary'        => __( 'Uploaded: %1$d of %2$d.', 'mulino-file-show' ),
 				/* translators: %d: HTTP status code, e.g. 413. */
 				'serverRejected'       => __( 'The server rejected the upload (HTTP %d). The file may be larger than your web host allows.', 'mulino-file-show' ),
+				/* translators: %d: HTTP status code, e.g. 503. */
+				'serverError'          => __( 'The server stopped while handling the upload (HTTP %d). Large photos can take longer than the web host allows. Check the Media Library: the file may have been saved even so.', 'mulino-file-show' ),
 				'renameDocPrompt'      => __( 'Rename document to:', 'mulino-file-show' ),
 				'couldNotRename'       => __( 'Could not rename.', 'mulino-file-show' ),
 				'deleteDocConfirm'     => __( 'Move this document to the trash?', 'mulino-file-show' ),
@@ -369,6 +371,7 @@ function mulino_ajax_upload() {
 	require_once ABSPATH . 'wp-admin/includes/media.php';
 	require_once ABSPATH . 'wp-admin/includes/image.php';
 
+	mulino_skip_image_sizes();
 	$attachment_id = media_handle_upload( 'file', 0 );
 	if ( is_wp_error( $attachment_id ) ) {
 		wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );

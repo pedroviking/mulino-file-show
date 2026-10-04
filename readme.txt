@@ -129,6 +129,8 @@ library. This may change in a future version.
 
 = 1.2.1 =
 * New "Choose files" button in the upload area, so documents can also be uploaded from phones and tablets, where dragging and dropping isn't possible, and with the keyboard.
+* Uploading a large photo (for example straight from a phone) could fail with "HTTP 503" on some web hosts, leaving the photo in the Media Library but no document. Mulino now stores uploaded and imported files as they are, without WordPress' extra thumbnail sizes, which the library doesn't use.
+* The upload error for "HTTP 5xx" no longer blames the file size; it explains that the server stopped and that the file may be in the Media Library.
 * On phones and tablets, the folder tree is now shown above the documents, and the tick boxes and the rename and delete buttons are always visible (they used to appear only when hovering with a mouse).
 
 = 1.2.0 =

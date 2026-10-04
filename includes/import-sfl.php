@@ -215,6 +215,7 @@ function mulino_sfl_import_item( $list_id, $item, $list_dir, $target_id ) {
 		);
 	}
 
+	mulino_skip_image_sizes();
 	$attachment_id = media_handle_sideload(
 		array(
 			'name'     => basename( $source ),
