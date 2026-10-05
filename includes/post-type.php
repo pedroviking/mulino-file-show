@@ -31,7 +31,8 @@ function mulino_register_post_type() {
 			'show_in_menu'       => false,     // we add our own single top-level "Documents" menu instead
 			'menu_icon'          => 'dashicons-media-document',
 			'supports'           => array( 'title' ),
-			'capability_type'    => 'post',      // reuse normal Editor/Admin capabilities
+			'capability_type'    => 'post',
+			'capabilities'       => mulino_post_type_capabilities(), // all mapped to manage_mulino_documents
 			'map_meta_cap'       => true,
 			'hierarchical'       => false,
 			'show_in_rest'       => false,
@@ -63,6 +64,7 @@ function mulino_register_taxonomy() {
 			'query_var'         => false,
 			'rewrite'           => false,
 			'show_in_rest'      => false,
+			'capabilities'      => mulino_taxonomy_capabilities(),
 		)
 	);
 }

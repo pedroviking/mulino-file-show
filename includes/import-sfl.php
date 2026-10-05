@@ -277,7 +277,7 @@ function mulino_sfl_import_item( $list_id, $item, $list_dir, $target_id ) {
 function mulino_ajax_sfl_import() {
 	check_ajax_referer( 'mulino_import_nonce', 'nonce' );
 
-	if ( ! current_user_can( 'edit_posts' ) || ! current_user_can( 'upload_files' ) ) {
+	if ( ! mulino_current_user_can_manage() || ! current_user_can( 'upload_files' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
 	}
 
@@ -378,7 +378,7 @@ function mulino_enqueue_import_assets() {
 }
 
 function mulino_render_import_page() {
-	if ( ! current_user_can( 'upload_files' ) || ! current_user_can( 'edit_posts' ) ) {
+	if ( ! current_user_can( 'upload_files' ) || ! mulino_current_user_can_manage() ) {
 		wp_die( esc_html__( 'You do not have permission to access this page.', 'mulino-file-show' ) );
 	}
 

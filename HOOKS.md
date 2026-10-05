@@ -23,6 +23,10 @@ also fires for folders created by a folder upload or an import.
 | `mulino_after_delete_doc` | A document has been moved to the trash | `$doc_id` |
 | `mulino_after_folder_deleted` | An (empty) folder has been deleted | `$term_id` |
 | `mulino_after_import` | A document has been imported from another plugin | `$post_id, $attachment_id, $folder_id, $source` (`$source` is e.g. `sfl:1:Minutes/2024.pdf`) |
+| `mulino_after_replace_file` | A document's file has been replaced with a new version | `$doc_id, $attachment_id, $old_attachment_id` (`$old_attachment_id` is `0` if there was none) |
+| `mulino_after_description_changed` | A document's description has been changed | `$doc_id, $description` (`''` if removed) |
+| `mulino_after_folder_visibility_changed` | A folder's "Who can see this folder" setting has been changed | `$term_id, $visibility` (e.g. `public` or `members`) |
+| `mulino_before_serve_document` | A visitor who may see a document opens its `?mulino_document=ID` link, just before they are forwarded to the file | `WP_Post $doc, $attachment_id` |
 
 Example:
 
@@ -65,11 +69,55 @@ add_filter( 'mulino_frontend_document_query_args', function ( $query_args, $curr
 }, 10, 2 );
 ```
 
+## Filters (who may see what)
+
+A folder is shown to everyone or only to logged-in users (term meta
+`mulino_visibility`: `public` or `members`), and a hidden folder hides
+everything below it. These filters let an add-on add its own choices,
+such as "Board members", and decide who may see them. They apply to the
+folder browser, its search and the `?mulino_document=ID` links.
+
+| Hook | What it changes | Signature |
+|---|---|---|
+| `mulino_folder_visibility_options` | The choices under "Who can see this folder on the site" in the Edit folder window | `apply_filters( 'mulino_folder_visibility_options', array $options )` (stored value => label; default `public` and `members`) |
+| `mulino_user_can_view_folder` | Whether a visitor may see a folder, its subfolders and its documents | `apply_filters( 'mulino_user_can_view_folder', bool $can, WP_Term $term, int $user_id )` (`$user_id` is `0` when logged out) |
+| `mulino_user_can_view_document` | Whether a visitor may see and open one document | `apply_filters( 'mulino_user_can_view_document', bool $can, WP_Post $doc, int $user_id )` |
+| `mulino_document_url` | The link to a document in the folder browser | `apply_filters( 'mulino_document_url', string $url, WP_Post $doc )` (default `home_url( '/?mulino_document=ID' )`) |
+
+Example -- a "Board members" choice that only users with the
+`board_member` role may see:
+
+```php
+add_filter( 'mulino_folder_visibility_options', function ( $options ) {
+    $options['board'] = 'Board members';
+    return $options;
+} );
+
+add_filter( 'mulino_user_can_view_folder', function ( $can, $term, $user_id ) {
+    foreach ( array_merge( array( $term->term_id ), get_ancestors( $term->term_id, 'mulino_folder', 'taxonomy' ) ) as $id ) {
+        if ( 'board' === get_term_meta( $id, 'mulino_visibility', true ) ) {
+            $user = get_userdata( $user_id );
+            return $user && in_array( 'board_member', (array) $user->roles, true );
+        }
+    }
+    return $can;
+}, 10, 3 );
+```
+
+To serve a protected file yourself instead of forwarding to its Media
+Library address, send it in `mulino_before_serve_document` and `exit`.
+
+## Capability
+
+Everything on the File Show screen requires `manage_mulino_documents`
+(constant `MULINO_CAPABILITY`). The document post type and folder
+taxonomy map all their capabilities to it.
+
 ## What's intentionally *not* a hook (yet)
 
-Apart from the document query above, the frontend `[mulino_documents]`
-shortcode doesn't expose filters yet. If a premium add-on needs to add
-something to the public-facing folder browser (not just the admin
-screen), that's a reasonable next hook to add -- open an issue on the
-repository rather than reading shortcode.php's internals directly, since
-those internals aren't a stable contract.
+The markup of the frontend `[mulino_documents]` browser isn't
+filterable yet. If a premium add-on needs to add something to the
+public-facing folder browser (not just the admin screen), that's a
+reasonable next hook to add -- open an issue on the repository rather
+than reading shortcode.php's internals directly, since those internals
+aren't a stable contract.

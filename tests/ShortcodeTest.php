@@ -74,6 +74,9 @@ class ShortcodeTest extends MULINO_TestCase {
 	}
 
 	public function test_subfolders_renders_a_card_per_folder() {
+		$this->mock_everything_public();
+		WP_Mock::userFunction( 'get_ancestors' )->andReturn( array() );
+		WP_Mock::userFunction( 'home_url' )->andReturn( 'https://example.test/' );
 		$this->mock_escaping_functions();
 
 		$decades = array(
@@ -129,7 +132,9 @@ class ShortcodeTest extends MULINO_TestCase {
 					return array();
 				}
 			);
-		WP_Mock::userFunction( 'wp_count_terms' )->andReturn( 2 );
+		$this->mock_everything_public();
+		WP_Mock::userFunction( 'get_ancestors' )->andReturn( array() );
+		WP_Mock::userFunction( 'get_terms' )->andReturn( array( $this->make_term( 1, '2010s', '2010s' ), $this->make_term( 2, '2020s', '2020s' ) ) );
 
 		$html = mulino_render_documents( false, self::TAXONOMY );
 
@@ -139,12 +144,15 @@ class ShortcodeTest extends MULINO_TestCase {
 	}
 
 	public function test_empty_message_shown_when_folder_has_no_subfolders_either() {
+		$this->mock_everything_public();
+		WP_Mock::userFunction( 'get_ancestors' )->andReturn( array() );
+		WP_Mock::userFunction( 'home_url' )->andReturn( 'https://example.test/' );
 		$this->mock_escaping_functions();
 
 		$folder = $this->make_term( 5, '2023', '2023' );
 
 		WP_Mock::userFunction( 'get_posts' )->andReturn( array() );
-		WP_Mock::userFunction( 'wp_count_terms' )->andReturn( 0 );
+		WP_Mock::userFunction( 'get_terms' )->andReturn( array() );
 
 		$html = mulino_render_documents( $folder, self::TAXONOMY );
 
@@ -160,7 +168,14 @@ class ShortcodeTest extends MULINO_TestCase {
 		$folder = $this->make_term( 5, '2020s', '2020s' );
 
 		WP_Mock::userFunction( 'get_posts' )->andReturn( array() );
-		WP_Mock::userFunction( 'wp_count_terms' )->andReturn( 3 ); // e.g. 2021, 2022, 2023
+		$this->mock_everything_public();
+		WP_Mock::userFunction( 'get_ancestors' )->andReturn( array( 5 ) );
+		WP_Mock::userFunction( 'get_terms' )->andReturn(
+			array(
+				$this->make_term( 21, '2021', '2021' ),
+				$this->make_term( 22, '2022', '2022' ),
+			)
+		);
 
 		$html = mulino_render_documents( $folder, self::TAXONOMY );
 
@@ -174,6 +189,9 @@ class ShortcodeTest extends MULINO_TestCase {
 	 * defaults to true.
 	 */
 	public function test_get_posts_is_called_with_include_children_disabled() {
+		$this->mock_everything_public();
+		WP_Mock::userFunction( 'get_ancestors' )->andReturn( array() );
+		WP_Mock::userFunction( 'home_url' )->andReturn( 'https://example.test/' );
 		$folder        = $this->make_term( 5, '2023', '2023' );
 		$captured_args = null;
 
@@ -185,7 +203,7 @@ class ShortcodeTest extends MULINO_TestCase {
 					return array();
 				}
 			);
-		WP_Mock::userFunction( 'wp_count_terms' )->andReturn( 0 );
+		WP_Mock::userFunction( 'get_terms' )->andReturn( array() );
 		$this->mock_escaping_functions();
 
 		mulino_render_documents( $folder, self::TAXONOMY );
@@ -195,6 +213,9 @@ class ShortcodeTest extends MULINO_TestCase {
 	}
 
 	public function test_documents_renders_a_card_with_download_link() {
+		$this->mock_everything_public();
+		WP_Mock::userFunction( 'get_ancestors' )->andReturn( array() );
+		WP_Mock::userFunction( 'home_url' )->andReturn( 'https://example.test/' );
 		$this->mock_escaping_functions();
 
 		$folder = $this->make_term( 5, '2023', '2023' );
@@ -217,14 +238,25 @@ class ShortcodeTest extends MULINO_TestCase {
 			->with( $post )
 			->andReturn( 'Referat generalforsamling 2023' );
 
+		WP_Mock::userFunction( 'add_query_arg' )->andReturnUsing(
+			function ( $key, $value, $url ) {
+				return $url . '?' . $key . '=' . $value;
+			}
+		);
+
 		$html = mulino_render_documents( $folder, self::TAXONOMY );
 
-		$this->assertStringContainsString( 'https://example.test/uploads/2023/09/minutes.pdf', $html );
+		// The link goes through ?mulino_document=, so it survives a new version of the file.
+		$this->assertStringContainsString( 'mulino_document=101', $html );
+		$this->assertStringNotContainsString( 'minutes.pdf', $html );
 		$this->assertStringContainsString( 'Referat generalforsamling 2023', $html );
 		$this->assertStringContainsString( 'mulino-card--file', $html );
 	}
 
 	public function test_documents_without_an_attached_file_are_skipped() {
+		$this->mock_everything_public();
+		WP_Mock::userFunction( 'get_ancestors' )->andReturn( array() );
+		WP_Mock::userFunction( 'home_url' )->andReturn( 'https://example.test/' );
 		$this->mock_escaping_functions();
 
 		$folder = $this->make_term( 5, '2023', '2023' );
@@ -271,6 +303,9 @@ class ShortcodeTest extends MULINO_TestCase {
 	}
 
 	public function test_subfolders_can_be_shown_newest_year_first() {
+		$this->mock_everything_public();
+		WP_Mock::userFunction( 'get_ancestors' )->andReturn( array() );
+		WP_Mock::userFunction( 'home_url' )->andReturn( 'https://example.test/' );
 		$this->mock_escaping_functions();
 
 		WP_Mock::userFunction( 'get_terms' )->andReturn(
@@ -290,6 +325,9 @@ class ShortcodeTest extends MULINO_TestCase {
 	}
 
 	public function test_documents_are_sorted_naturally_by_name() {
+		$this->mock_everything_public();
+		WP_Mock::userFunction( 'get_ancestors' )->andReturn( array() );
+		WP_Mock::userFunction( 'home_url' )->andReturn( 'https://example.test/' );
 		$this->mock_escaping_functions();
 
 		$folder = $this->make_term( 5, '2023', '2023' );
@@ -318,6 +356,9 @@ class ShortcodeTest extends MULINO_TestCase {
 	}
 
 	public function test_orderby_date_is_left_to_the_database() {
+		$this->mock_everything_public();
+		WP_Mock::userFunction( 'get_ancestors' )->andReturn( array() );
+		WP_Mock::userFunction( 'home_url' )->andReturn( 'https://example.test/' );
 		$folder        = $this->make_term( 5, '2023', '2023' );
 		$captured_args = null;
 
@@ -327,7 +368,7 @@ class ShortcodeTest extends MULINO_TestCase {
 				return array();
 			}
 		);
-		WP_Mock::userFunction( 'wp_count_terms' )->andReturn( 1 );
+		WP_Mock::userFunction( 'get_terms' )->andReturn( array( $this->make_term( 6, 'Q1', 'q1' ) ) );
 
 		mulino_render_documents(
 			$folder,

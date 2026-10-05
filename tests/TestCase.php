@@ -45,6 +45,18 @@ class MULINO_TestCase extends \WP_Mock\Tools\TestCase {
 	}
 
 	/**
+	 * A logged-out visitor, every folder visible to everyone and every
+	 * document published: the visibility checks in visibility.php then
+	 * let everything through, so a test can focus on something else.
+	 */
+	protected function mock_everything_public() {
+		WP_Mock::userFunction( 'get_current_user_id' )->andReturn( 0 );
+		WP_Mock::userFunction( 'get_term_meta' )->andReturn( '' );
+		WP_Mock::userFunction( 'get_post_status' )->andReturn( 'publish' );
+		WP_Mock::userFunction( 'get_the_terms' )->andReturn( false );
+	}
+
+	/**
 	 * Build a lightweight stand-in for a WP_Term. The real class has
 	 * far more properties, but the plugin only ever reads these.
 	 */

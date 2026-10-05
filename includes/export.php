@@ -151,7 +151,7 @@ function mulino_write_export_zip( $zip_path ) {
 }
 
 function mulino_handle_export_zip() {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! mulino_current_user_can_manage() ) {
 		wp_die( esc_html__( 'You do not have permission to access this page.', 'mulino-file-show' ) );
 	}
 	check_admin_referer( 'mulino_export_zip' );

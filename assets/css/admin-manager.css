@@ -122,3 +122,26 @@
 		.mulino-tree-rename,
 		.mulino-tree-delete { opacity: 1; }
 	}
+	/* Keyboard users: show the hidden buttons when the row or card has focus. */
+	.mulino-tree-row:focus-within .mulino-tree-delete,
+	.mulino-tree-row:focus-within .mulino-tree-rename,
+	.mulino-manager-card:focus-within .mulino-select { opacity: 1; }
+	.mulino-tree-lock { font-size: 14px; width: 14px; height: 14px; margin-left: 0.3em; vertical-align: -2px; opacity: 0.75; }
+	.mulino-card-description { font-size: 0.75em; line-height: 1.3; color: #666; margin-top: 0.25em; word-break: break-word; }
+	.mulino-card-description:empty { display: none; }
+	.mulino-trash-link { margin: 0.75em 0 0; }
+	.mulino-dialog {
+		width: min(32em, calc(100vw - 2em)); box-sizing: border-box;
+		border: 1px solid #c3c4c7; border-radius: 8px; padding: 1.25em 1.5em;
+		box-shadow: 0 10px 30px rgba(0,0,0,.2);
+	}
+	.mulino-dialog::backdrop { background: rgba(0,0,0,.35); }
+	.mulino-dialog h2 { margin-top: 0; }
+	.mulino-dialog label { font-weight: 600; }
+	.mulino-dialog .mulino-radio { display: block; font-weight: normal; margin: 0.3em 0; }
+	.mulino-dialog fieldset { margin: 1em 0; }
+	.mulino-dialog legend { font-weight: 600; margin-bottom: 0.3em; }
+	.mulino-dialog .description { display: block; margin-top: 0.3em; }
+	.mulino-dialog select { max-width: 100%; }
+	.mulino-dialog-error { color: #d63638; min-height: 1em; margin: 0.5em 0; }
+	.mulino-dialog-buttons { display: flex; gap: 0.5em; margin-bottom: 0; }

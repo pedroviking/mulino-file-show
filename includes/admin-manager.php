@@ -23,11 +23,22 @@ function mulino_add_manager_page() {
 	add_menu_page(
 		__( 'Mulino file show', 'mulino-file-show' ),
 		__( 'File Show', 'mulino-file-show' ),
-		'edit_posts',
+		MULINO_CAPABILITY,
 		'mulino-manager',
 		'mulino_render_manager_page',
 		'dashicons-media-document',
 		100
+	);
+
+	// WordPress' own list of documents, with the trash. Users who only
+	// have manage_mulino_documents (e.g. a board member) can open it only
+	// because it is in the menu.
+	add_submenu_page(
+		'mulino-manager',
+		__( 'All documents', 'mulino-file-show' ),
+		__( 'All documents', 'mulino-file-show' ),
+		MULINO_CAPABILITY,
+		'edit.php?post_type=mulino_document'
 	);
 }
 add_action( 'admin_menu', 'mulino_add_manager_page' );
@@ -77,7 +88,6 @@ function mulino_enqueue_manager_assets( $hook ) {
 				'serverRejected'       => __( 'The server rejected the upload (HTTP %d). The file may be larger than your web host allows.', 'mulino-file-show' ),
 				/* translators: %d: HTTP status code, e.g. 503. */
 				'serverError'          => __( 'The server stopped while handling the upload (HTTP %d). Large photos can take longer than the web host allows. Check the Media Library: the file may have been saved even so.', 'mulino-file-show' ),
-				'renameDocPrompt'      => __( 'Rename document to:', 'mulino-file-show' ),
 				'couldNotRename'       => __( 'Could not rename.', 'mulino-file-show' ),
 				'deleteDocConfirm'     => __( 'Move this document to the trash?', 'mulino-file-show' ),
 				'couldNotDelete'       => __( 'Could not delete.', 'mulino-file-show' ),
@@ -87,7 +97,6 @@ function mulino_enqueue_manager_assets( $hook ) {
 				'couldNotMoveFolder'   => __( 'Could not move folder.', 'mulino-file-show' ),
 				'newFolderPrompt'      => __( 'New folder name:', 'mulino-file-show' ),
 				'couldNotCreateFolder' => __( 'Could not create folder.', 'mulino-file-show' ),
-				'renameFolderPrompt'   => __( 'Rename folder to:', 'mulino-file-show' ),
 				'couldNotRenameFolder' => __( 'Could not rename folder.', 'mulino-file-show' ),
 				'deleteFolderConfirm'  => __( 'Delete this folder? It must be empty (no subfolders or documents).', 'mulino-file-show' ),
 				'couldNotDeleteFolder' => __( 'Could not delete folder.', 'mulino-file-show' ),
@@ -99,7 +108,12 @@ function mulino_enqueue_manager_assets( $hook ) {
 				'bulkDeleteConfirmOne' => __( 'Move the selected document to the trash?', 'mulino-file-show' ),
 				/* translators: %d: number of selected documents (always more than one). */
 				'bulkDeleteConfirm'    => __( 'Move %d documents to the trash?', 'mulino-file-show' ),
+				'filesDeletedToo'      => __( 'Their files will be deleted from the Media Library when the trash is emptied.', 'mulino-file-show' ),
+				'couldNotSave'         => __( 'Could not save the changes.', 'mulino-file-show' ),
+				'replacingFile'        => __( 'Uploading the new file...', 'mulino-file-show' ),
+				'couldNotReplace'      => __( 'Could not replace the file.', 'mulino-file-show' ),
 			),
+			'deleteFiles'   => (bool) get_option( 'mulino_delete_files_with_documents', false ),
 		)
 	);
 }
@@ -130,14 +144,24 @@ function mulino_render_folder_tree( $parent_id, $selected_id ) {
 	foreach ( $terms as $term ) {
 		$url    = add_query_arg( 'folder', $term->slug, $base_url );
 		$is_sel = ( (int) $term->term_id === (int) $selected_id ) ? ' is-selected' : '';
-		$out   .= '<li class="mulino-tree-item' . esc_attr( $is_sel ) . '" data-term-id="' . esc_attr( $term->term_id ) . '">';
-		$out   .= '<span class="mulino-tree-row" draggable="true">';
-		$out   .= '<a href="' . esc_url( $url ) . '" class="mulino-tree-link" draggable="false" data-term-name="' . esc_attr( $term->name ) . '">' . esc_html( $term->name ) . '</a>';
-		$out   .= '<button type="button" class="mulino-tree-rename dashicons dashicons-edit" data-term-id="' . esc_attr( $term->term_id ) . '" title="' . esc_attr__( 'Rename folder', 'mulino-file-show' ) . '" aria-label="' . esc_attr__( 'Rename folder', 'mulino-file-show' ) . '"></button>';
-		$out   .= '<button type="button" class="mulino-tree-delete" data-term-id="' . esc_attr( $term->term_id ) . '" title="' . esc_attr__( 'Delete folder', 'mulino-file-show' ) . '">&times;</button>';
-		$out   .= '</span>';
-		$out   .= mulino_render_folder_tree( $term->term_id, $selected_id );
-		$out   .= '</li>';
+		$visibility = mulino_get_folder_visibility( $term->term_id );
+		/* translators: %s: folder name. */
+		$edit_label = sprintf( __( 'Edit folder %s', 'mulino-file-show' ), $term->name );
+		/* translators: %s: folder name. */
+		$delete_label = sprintf( __( 'Delete folder %s', 'mulino-file-show' ), $term->name );
+		$lock         = '';
+		if ( 'public' !== $visibility ) {
+			$options = mulino_folder_visibility_options();
+			$lock    = '<span class="mulino-tree-lock dashicons dashicons-lock" title="' . esc_attr( isset( $options[ $visibility ] ) ? $options[ $visibility ] : $visibility ) . '"></span>';
+		}
+		$out .= '<li class="mulino-tree-item' . esc_attr( $is_sel ) . '" data-term-id="' . esc_attr( $term->term_id ) . '" data-parent-id="' . esc_attr( $term->parent ) . '" data-visibility="' . esc_attr( $visibility ) . '">';
+		$out .= '<span class="mulino-tree-row" draggable="true">';
+		$out .= '<a href="' . esc_url( $url ) . '" class="mulino-tree-link" draggable="false" data-term-name="' . esc_attr( $term->name ) . '"' . ( $is_sel ? ' aria-current="page"' : '' ) . '>' . esc_html( $term->name ) . $lock . '</a>';
+		$out .= '<button type="button" class="mulino-tree-rename dashicons dashicons-edit" data-term-id="' . esc_attr( $term->term_id ) . '" title="' . esc_attr( $edit_label ) . '" aria-label="' . esc_attr( $edit_label ) . '"></button>';
+		$out .= '<button type="button" class="mulino-tree-delete" data-term-id="' . esc_attr( $term->term_id ) . '" title="' . esc_attr( $delete_label ) . '" aria-label="' . esc_attr( $delete_label ) . '">&times;</button>';
+		$out .= '</span>';
+		$out .= mulino_render_folder_tree( $term->term_id, $selected_id );
+		$out .= '</li>';
 	}
 	$out .= '</ul>';
 
@@ -216,15 +240,24 @@ function mulino_render_one_manager_card( $doc ) {
 	 */
 	$extra_actions = apply_filters( 'mulino_manager_card_actions', '', $doc );
 
-	/* translators: %s: document title. */
-	$select_label = sprintf( __( 'Select %s', 'mulino-file-show' ), get_the_title( $doc ) );
+	$title       = get_the_title( $doc );
+	$description = (string) get_post_meta( $doc->ID, '_mulino_description', true );
+	$file_path   = $attachment_id ? get_attached_file( $attachment_id ) : '';
 
-	return '<div class="mulino-card mulino-manager-card" draggable="true" data-doc-id="' . esc_attr( $doc->ID ) . '" data-doc-name="' . esc_attr( get_the_title( $doc ) ) . '">'
+	/* translators: %s: document title. */
+	$select_label = sprintf( __( 'Select %s', 'mulino-file-show' ), $title );
+	/* translators: %s: document title. */
+	$edit_label = sprintf( __( 'Edit %s', 'mulino-file-show' ), $title );
+	/* translators: %s: document title. */
+	$delete_label = sprintf( __( 'Delete %s', 'mulino-file-show' ), $title );
+
+	return '<div class="mulino-card mulino-manager-card" draggable="true" data-doc-id="' . esc_attr( $doc->ID ) . '" data-doc-name="' . esc_attr( $title ) . '" data-doc-description="' . esc_attr( $description ) . '" data-file-name="' . esc_attr( $file_path ? wp_basename( $file_path ) : '' ) . '" data-file-url="' . esc_url( $url ) . '">'
 		. '<input type="checkbox" class="mulino-select" value="' . esc_attr( $doc->ID ) . '" aria-label="' . esc_attr( $select_label ) . '" />'
 		. mulino_file_icon_svg( $icon['label'], $icon['color'] )
-		. '<span class="mulino-name">' . esc_html( get_the_title( $doc ) ) . '</span>'
-		. '<button type="button" class="mulino-rename dashicons dashicons-edit" data-doc-id="' . esc_attr( $doc->ID ) . '" title="' . esc_attr__( 'Rename', 'mulino-file-show' ) . '" aria-label="' . esc_attr__( 'Rename', 'mulino-file-show' ) . '"></button>'
-		. '<button type="button" class="mulino-delete" data-doc-id="' . esc_attr( $doc->ID ) . '" title="' . esc_attr__( 'Delete', 'mulino-file-show' ) . '">&times;</button>'
+		. '<span class="mulino-name">' . esc_html( $title ) . '</span>'
+		. '<span class="mulino-card-description">' . esc_html( $description ) . '</span>'
+		. '<button type="button" class="mulino-rename dashicons dashicons-edit" data-doc-id="' . esc_attr( $doc->ID ) . '" title="' . esc_attr( $edit_label ) . '" aria-label="' . esc_attr( $edit_label ) . '"></button>'
+		. '<button type="button" class="mulino-delete" data-doc-id="' . esc_attr( $doc->ID ) . '" title="' . esc_attr( $delete_label ) . '" aria-label="' . esc_attr( $delete_label ) . '">&times;</button>'
 		. wp_kses_post( $extra_actions )
 		. '</div>';
 }
@@ -265,7 +298,7 @@ function mulino_folder_dropdown_allowed_html() {
 }
 
 function mulino_render_manager_page() {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! mulino_current_user_can_manage() ) {
 		wp_die( esc_html__( 'You do not have permission to access this page.', 'mulino-file-show' ) );
 	}
 
@@ -280,6 +313,7 @@ function mulino_render_manager_page() {
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Mulino file show', 'mulino-file-show' ); ?></h1>
 		<p><?php esc_html_e( 'Drag files or whole folders onto the drop zone to upload them into the open folder. Drag a file card onto a folder on the left to move it, or tick several cards to move or delete them together.', 'mulino-file-show' ); ?></p>
+		<p><?php esc_html_e( 'Show the library on a page with the "Document library" block or the [mulino_documents] shortcode.', 'mulino-file-show' ); ?></p>
 
 		<?php
 		/**
@@ -300,9 +334,27 @@ function mulino_render_manager_page() {
 					<button type="button" id="mulino-new-folder" class="button"><?php esc_html_e( '+ New folder', 'mulino-file-show' ); ?></button>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=mulino_export_zip' ), 'mulino_export_zip' ) ); ?>" id="mulino-export" class="button"><?php esc_html_e( 'Export as ZIP', 'mulino-file-show' ); ?></a>
 				</div>
+				<?php
+				$mulino_counts = wp_count_posts( 'mulino_document' );
+				if ( ! empty( $mulino_counts->trash ) ) :
+					?>
+					<p class="mulino-trash-link">
+						<a href="<?php echo esc_url( admin_url( 'edit.php?post_status=trash&post_type=mulino_document' ) ); ?>">
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %d: number of documents in the trash. */
+									_n( 'Trash (%d document)', 'Trash (%d documents)', (int) $mulino_counts->trash, 'mulino-file-show' ),
+									(int) $mulino_counts->trash
+								)
+							);
+							?>
+						</a>
+					</p>
+				<?php endif; ?>
 				<ul class="mulino-tree" id="mulino-tree">
 					<li class="mulino-tree-item<?php echo ( 0 === $selected_id ) ? ' is-selected' : ''; ?>" data-term-id="0">
-						<a href="<?php echo esc_url( $root_url ); ?>" class="mulino-tree-link"><?php esc_html_e( 'Top level', 'mulino-file-show' ); ?></a>
+						<a href="<?php echo esc_url( $root_url ); ?>" class="mulino-tree-link"<?php echo ( 0 === $selected_id ) ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Top level', 'mulino-file-show' ); ?></a>
 						<?php
 						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each value is escaped individually inside this function before being concatenated into the returned HTML string.
 						echo mulino_render_folder_tree( 0, $selected_id );
@@ -353,6 +405,7 @@ function mulino_render_manager_page() {
 				</div>
 			</div>
 		</div>
+		<?php mulino_render_manager_dialogs(); ?>
 	</div>
 	<?php
 }
@@ -360,7 +413,7 @@ function mulino_render_manager_page() {
 function mulino_ajax_upload() {
 	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! mulino_current_user_can_manage() ) {
 		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
 	}
 	if ( empty( $_FILES['file'] ) ) {
@@ -485,7 +538,7 @@ add_action( 'wp_ajax_mulino_rename_doc', 'mulino_ajax_rename_doc' );
 function mulino_ajax_move_folder() {
 	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! mulino_current_user_can_manage() ) {
 		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
 	}
 
@@ -546,7 +599,7 @@ add_action( 'wp_ajax_mulino_move_folder', 'mulino_ajax_move_folder' );
 function mulino_ajax_create_folder() {
 	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! mulino_current_user_can_manage() ) {
 		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
 	}
 
@@ -577,7 +630,7 @@ add_action( 'wp_ajax_mulino_create_folder', 'mulino_ajax_create_folder' );
 function mulino_ajax_rename_folder() {
 	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! mulino_current_user_can_manage() ) {
 		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
 	}
 
@@ -637,7 +690,7 @@ add_action( 'wp_ajax_mulino_delete_doc', 'mulino_ajax_delete_doc' );
 function mulino_ajax_delete_folder() {
 	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! mulino_current_user_can_manage() ) {
 		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
 	}
 
@@ -719,7 +772,7 @@ function mulino_bulk_doc_ids( $capability ) {
 function mulino_ajax_bulk_move() {
 	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! mulino_current_user_can_manage() ) {
 		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
 	}
 
@@ -748,7 +801,7 @@ add_action( 'wp_ajax_mulino_bulk_move', 'mulino_ajax_bulk_move' );
 function mulino_ajax_bulk_delete() {
 	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! mulino_current_user_can_manage() ) {
 		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
 	}
 
@@ -775,7 +828,7 @@ add_action( 'wp_ajax_mulino_bulk_delete', 'mulino_ajax_bulk_delete' );
 function mulino_ajax_ensure_folder_path() {
 	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! mulino_current_user_can_manage() ) {
 		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
 	}
 
@@ -803,3 +856,183 @@ function mulino_ajax_ensure_folder_path() {
 	wp_send_json_success( array( 'term_id' => $term_id ) );
 }
 add_action( 'wp_ajax_mulino_ensure_folder_path', 'mulino_ajax_ensure_folder_path' );
+
+/**
+ * The "Edit document" and "Edit folder" dialogs. They are filled in by
+ * admin-manager.js with the clicked document's or folder's details, and
+ * give keyboard and touch users a way to move a folder without dragging.
+ */
+function mulino_render_manager_dialogs() {
+	?>
+	<dialog id="mulino-doc-dialog" class="mulino-dialog" aria-labelledby="mulino-doc-dialog-title">
+		<form method="dialog">
+			<h2 id="mulino-doc-dialog-title"><?php esc_html_e( 'Edit document', 'mulino-file-show' ); ?></h2>
+			<p>
+				<label for="mulino-doc-name"><?php esc_html_e( 'Name', 'mulino-file-show' ); ?></label>
+				<input type="text" id="mulino-doc-name" class="widefat" required />
+			</p>
+			<p>
+				<label for="mulino-doc-description"><?php esc_html_e( 'Description (optional)', 'mulino-file-show' ); ?></label>
+				<textarea id="mulino-doc-description" class="widefat" rows="3"></textarea>
+				<span class="description"><?php esc_html_e( 'Shown under the name when the library on the site shows details.', 'mulino-file-show' ); ?></span>
+			</p>
+			<fieldset class="mulino-replace">
+				<legend><?php esc_html_e( 'File', 'mulino-file-show' ); ?></legend>
+				<p><a id="mulino-doc-file" href="#" target="_blank" rel="noopener"></a></p>
+				<p>
+					<label for="mulino-replace-input"><?php esc_html_e( 'Replace with a new version:', 'mulino-file-show' ); ?></label><br />
+					<input type="file" id="mulino-replace-input" />
+				</p>
+				<p class="description"><?php esc_html_e( 'The document keeps its name, folder and link on the site. The old file stays in the Media Library.', 'mulino-file-show' ); ?></p>
+			</fieldset>
+			<p class="mulino-dialog-error" role="alert"></p>
+			<p class="mulino-dialog-buttons">
+				<button type="submit" value="save" class="button button-primary"><?php esc_html_e( 'Save', 'mulino-file-show' ); ?></button>
+				<button type="submit" value="cancel" class="button" formnovalidate><?php esc_html_e( 'Cancel', 'mulino-file-show' ); ?></button>
+			</p>
+		</form>
+	</dialog>
+
+	<dialog id="mulino-folder-dialog" class="mulino-dialog" aria-labelledby="mulino-folder-dialog-title">
+		<form method="dialog">
+			<h2 id="mulino-folder-dialog-title"><?php esc_html_e( 'Edit folder', 'mulino-file-show' ); ?></h2>
+			<p>
+				<label for="mulino-folder-name"><?php esc_html_e( 'Name', 'mulino-file-show' ); ?></label>
+				<input type="text" id="mulino-folder-name" class="widefat" required />
+			</p>
+			<p>
+				<label for="mulino-folder-parent"><?php esc_html_e( 'Place in', 'mulino-file-show' ); ?></label><br />
+				<?php echo wp_kses( mulino_folder_dropdown( 'mulino-folder-parent' ), mulino_folder_dropdown_allowed_html() ); ?>
+			</p>
+			<fieldset>
+				<legend><?php esc_html_e( 'Who can see this folder on the site', 'mulino-file-show' ); ?></legend>
+				<?php foreach ( mulino_folder_visibility_options() as $mulino_value => $mulino_label ) : ?>
+					<label class="mulino-radio"><input type="radio" name="mulino-folder-visibility" value="<?php echo esc_attr( $mulino_value ); ?>" /> <?php echo esc_html( $mulino_label ); ?></label>
+				<?php endforeach; ?>
+				<p class="description"><?php esc_html_e( 'Also applies to the folders inside it. Hidden folders and documents are left out of the library and its search, and their links ask visitors to log in. Anyone who already has the direct address of a file can still open it.', 'mulino-file-show' ); ?></p>
+			</fieldset>
+			<p class="mulino-dialog-error" role="alert"></p>
+			<p class="mulino-dialog-buttons">
+				<button type="submit" value="save" class="button button-primary"><?php esc_html_e( 'Save', 'mulino-file-show' ); ?></button>
+				<button type="submit" value="cancel" class="button" formnovalidate><?php esc_html_e( 'Cancel', 'mulino-file-show' ); ?></button>
+			</p>
+		</form>
+	</dialog>
+	<?php
+}
+
+/**
+ * Save a document's description (shown on the site with the details).
+ */
+function mulino_ajax_set_description() {
+	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
+
+	$doc_id = isset( $_POST['doc_id'] ) ? absint( $_POST['doc_id'] ) : 0;
+	if ( ! $doc_id || 'mulino_document' !== get_post_type( $doc_id ) || ! current_user_can( 'edit_post', $doc_id ) ) {
+		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
+	}
+
+	$description = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
+	if ( '' === $description ) {
+		delete_post_meta( $doc_id, '_mulino_description' );
+	} else {
+		update_post_meta( $doc_id, '_mulino_description', $description );
+	}
+
+	/**
+	 * Fires after a document's description has been changed.
+	 *
+	 * @param int    $doc_id      The mulino_document post ID.
+	 * @param string $description The new description ('' if removed).
+	 */
+	do_action( 'mulino_after_description_changed', $doc_id, $description );
+
+	wp_send_json_success( array( 'description' => $description ) );
+}
+add_action( 'wp_ajax_mulino_set_description', 'mulino_ajax_set_description' );
+
+/**
+ * Replace a document's file with a new upload. The document keeps its
+ * ID, name, folder and ?mulino_document= link; the old file stays in
+ * the Media Library (so its direct address keeps working) and is
+ * remembered in _mulino_previous_file_id (one meta row per version).
+ */
+function mulino_ajax_replace_file() {
+	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
+
+	$doc_id = isset( $_POST['doc_id'] ) ? absint( $_POST['doc_id'] ) : 0;
+	if ( ! $doc_id || 'mulino_document' !== get_post_type( $doc_id ) || ! current_user_can( 'edit_post', $doc_id ) ) {
+		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
+	}
+	if ( empty( $_FILES['file'] ) ) {
+		wp_send_json_error( array( 'message' => __( 'No file received.', 'mulino-file-show' ) ) );
+	}
+
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+
+	mulino_skip_image_sizes();
+	$attachment_id = media_handle_upload( 'file', 0 );
+	if ( is_wp_error( $attachment_id ) ) {
+		wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
+	}
+
+	$old_id = (int) get_post_meta( $doc_id, '_mulino_file_id', true );
+	if ( $old_id ) {
+		// One row per older version, newest last.
+		add_post_meta( $doc_id, '_mulino_previous_file_id', $old_id );
+	}
+	update_post_meta( $doc_id, '_mulino_file_id', $attachment_id );
+
+	/**
+	 * Fires after a document's file has been replaced with a new version.
+	 *
+	 * @param int $doc_id            The mulino_document post ID.
+	 * @param int $attachment_id     The new file's attachment ID.
+	 * @param int $old_attachment_id The previous file's attachment ID (0 if none).
+	 */
+	do_action( 'mulino_after_replace_file', $doc_id, $attachment_id, $old_id );
+
+	wp_send_json_success( array( 'html' => mulino_render_one_manager_card( get_post( $doc_id ) ) ) );
+}
+add_action( 'wp_ajax_mulino_replace_file', 'mulino_ajax_replace_file' );
+
+/**
+ * Set who can see a folder on the site.
+ */
+function mulino_ajax_set_folder_visibility() {
+	check_ajax_referer( 'mulino_manager_nonce', 'nonce' );
+
+	if ( ! mulino_current_user_can_manage() ) {
+		wp_send_json_error( array( 'message' => __( 'Not allowed.', 'mulino-file-show' ) ), 403 );
+	}
+
+	$term_id = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
+	$term    = $term_id ? get_term( $term_id, 'mulino_folder' ) : null;
+	if ( ! $term_id || ! $term || is_wp_error( $term ) ) {
+		wp_send_json_error( array( 'message' => __( 'Invalid folder.', 'mulino-file-show' ) ) );
+	}
+
+	$visibility = isset( $_POST['visibility'] ) ? sanitize_key( wp_unslash( $_POST['visibility'] ) ) : '';
+	if ( ! array_key_exists( $visibility, mulino_folder_visibility_options() ) ) {
+		wp_send_json_error( array( 'message' => __( 'Unknown choice.', 'mulino-file-show' ) ) );
+	}
+
+	if ( 'public' === $visibility ) {
+		delete_term_meta( $term_id, 'mulino_visibility' );
+	} else {
+		update_term_meta( $term_id, 'mulino_visibility', $visibility );
+	}
+
+	/**
+	 * Fires after the "Who can see this folder" setting has been changed.
+	 *
+	 * @param int    $term_id    The mulino_folder term ID.
+	 * @param string $visibility The new setting, e.g. "public" or "members".
+	 */
+	do_action( 'mulino_after_folder_visibility_changed', $term_id, $visibility );
+
+	wp_send_json_success( array( 'visibility' => $visibility ) );
+}
+add_action( 'wp_ajax_mulino_set_folder_visibility', 'mulino_ajax_set_folder_visibility' );

@@ -1,0 +1,28 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "mulino/documents",
+	"title": "Document library",
+	"category": "widgets",
+	"icon": "portfolio",
+	"description": "Show your Mulino file show folders and documents, so visitors can browse them.",
+	"keywords": [ "documents", "files", "folders", "mulino" ],
+	"textdomain": "mulino-file-show",
+	"attributes": {
+		"folder": { "type": "string", "default": "" },
+		"layout": { "type": "string", "default": "grid" },
+		"details": { "type": "string", "default": "" },
+		"search": { "type": "boolean", "default": false },
+		"perPage": { "type": "number", "default": 0 },
+		"orderby": { "type": "string", "default": "name" },
+		"documentOrder": { "type": "string", "default": "asc" },
+		"folderOrder": { "type": "string", "default": "asc" },
+		"hideEmpty": { "type": "boolean", "default": false },
+		"loggedInOnly": { "type": "boolean", "default": false }
+	},
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ]
+	},
+	"editorScript": "file:./index.js"
+}

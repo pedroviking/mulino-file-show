@@ -337,25 +337,133 @@
 		}
 	} );
 
-	// --- Rename a document ---
+	// --- Dialogs: shared helpers ---
+	// Open a <dialog>, and call onSave() when it's closed with "Save".
+	// onSave returns a promise that resolves to true when the dialog may
+	// close, or to an error message to show in it.
+	function openDialog( dialog, onSave ) {
+		var form   = dialog.querySelector( 'form' );
+		var error  = dialog.querySelector( '.mulino-dialog-error' );
+		var opener = document.activeElement;
+		error.textContent = '';
+
+		form.onsubmit = function ( e ) {
+			var submitter = e.submitter || document.activeElement;
+			if ( submitter && 'cancel' === submitter.value ) {
+				return; // let the dialog close
+			}
+			e.preventDefault();
+			form.querySelectorAll( 'button' ).forEach( function ( b ) {
+				b.disabled = true;
+			} );
+			onSave().then( function ( result ) {
+				form.querySelectorAll( 'button' ).forEach( function ( b ) {
+					b.disabled = false;
+				} );
+				if ( true === result ) {
+					dialog.close();
+				} else {
+					error.textContent = result;
+				}
+			} );
+		};
+		var openerDocId = opener && opener.getAttribute ? opener.getAttribute( 'data-doc-id' ) : null;
+		dialog.onclose = function () {
+			// A replaced file redraws its card, so find the new button.
+			if ( opener && ! document.body.contains( opener ) && openerDocId ) {
+				opener = grid.querySelector( '.mulino-rename[data-doc-id="' + openerDocId + '"]' );
+			}
+			if ( opener && document.body.contains( opener ) ) {
+				opener.focus();
+			}
+		};
+		dialog.showModal();
+	}
+
+	function messageFrom( json, fallback ) {
+		return json && json.data && json.data.message ? json.data.message : fallback;
+	}
+
+	// --- Edit a document: name, description, replace the file ---
+	var docDialog = document.getElementById( 'mulino-doc-dialog' );
 	grid.addEventListener( 'click', function ( e ) {
 		if ( ! e.target.classList.contains( 'mulino-rename' ) ) {
 			return;
 		}
-		var card    = e.target.closest( '.mulino-manager-card' );
-		var docId   = e.target.getAttribute( 'data-doc-id' );
-		var current = card.getAttribute( 'data-doc-name' ) || '';
-		var name    = prompt( i18n.renameDocPrompt, current );
-		if ( ! name || name === current ) {
-			return;
-		}
-		postAjax( { action: 'mulino_rename_doc', doc_id: docId, name: name } ).then( function ( json ) {
-			if ( json.success ) {
-				card.setAttribute( 'data-doc-name', name );
-				card.querySelector( '.mulino-name' ).textContent = name;
-			} else {
-				alert( json.data && json.data.message ? json.data.message : i18n.couldNotRename );
+		var card        = e.target.closest( '.mulino-manager-card' );
+		var docId       = e.target.getAttribute( 'data-doc-id' );
+		var nameInput   = document.getElementById( 'mulino-doc-name' );
+		var descInput   = document.getElementById( 'mulino-doc-description' );
+		var replaceInput  = document.getElementById( 'mulino-replace-input' );
+		var fileLink    = document.getElementById( 'mulino-doc-file' );
+		var oldName     = card.getAttribute( 'data-doc-name' ) || '';
+		var oldDesc     = card.getAttribute( 'data-doc-description' ) || '';
+
+		nameInput.value      = oldName;
+		descInput.value      = oldDesc;
+		replaceInput.value     = '';
+		fileLink.textContent = card.getAttribute( 'data-file-name' ) || '';
+		fileLink.href        = card.getAttribute( 'data-file-url' ) || '#';
+
+		openDialog( docDialog, function () {
+			var name  = nameInput.value.trim();
+			var desc  = descInput.value.trim();
+			var steps = Promise.resolve( true );
+
+			if ( name && name !== oldName ) {
+				steps = steps.then( function ( ok ) {
+					return true !== ok ? ok : postAjax( { action: 'mulino_rename_doc', doc_id: docId, name: name } ).then( function ( json ) {
+						if ( ! json.success ) {
+							return messageFrom( json, i18n.couldNotRename );
+						}
+						card.setAttribute( 'data-doc-name', name );
+						card.querySelector( '.mulino-name' ).textContent = name;
+						return true;
+					} );
+				} );
 			}
+			if ( desc !== oldDesc ) {
+				steps = steps.then( function ( ok ) {
+					return true !== ok ? ok : postAjax( { action: 'mulino_set_description', doc_id: docId, description: desc } ).then( function ( json ) {
+						if ( ! json.success ) {
+							return messageFrom( json, i18n.couldNotSave );
+						}
+						card.setAttribute( 'data-doc-description', json.data.description );
+						card.querySelector( '.mulino-card-description' ).textContent = json.data.description;
+						return true;
+					} );
+				} );
+			}
+			if ( replaceInput.files.length ) {
+				steps = steps.then( function ( ok ) {
+					if ( true !== ok ) {
+						return ok;
+					}
+					var file = replaceInput.files[ 0 ];
+					if ( mulinoManager.maxUploadSize && file.size > mulinoManager.maxUploadSize ) {
+						return format( i18n.fileTooLarge, file.name, i18n.maxUploadSizeText );
+					}
+					docDialog.querySelector( '.mulino-dialog-error' ).textContent = i18n.replacingFile;
+					return postAjax( { action: 'mulino_replace_file', doc_id: docId, file: file } ).then( function ( json ) {
+						if ( ! json.success ) {
+							return messageFrom( json, i18n.couldNotReplace );
+						}
+						var wrapper = document.createElement( 'div' );
+						wrapper.innerHTML = json.data.html;
+						var wasChecked = card.querySelector( '.mulino-select' ).checked;
+						card.replaceWith( wrapper.firstElementChild );
+						card = grid.querySelector( '.mulino-manager-card[data-doc-id="' + docId + '"]' );
+						card.querySelector( '.mulino-select' ).checked = wasChecked;
+						updateSelection();
+						return true;
+					}, function () {
+						return i18n.couldNotReplace;
+					} );
+				} );
+			}
+			return steps.catch( function () {
+				return i18n.couldNotSave;
+			} );
 		} );
 	} );
 
@@ -364,7 +472,7 @@
 		if ( ! e.target.classList.contains( 'mulino-delete' ) ) {
 			return;
 		}
-		if ( ! confirm( i18n.deleteDocConfirm ) ) {
+		if ( ! confirm( i18n.deleteDocConfirm + ( mulinoManager.deleteFiles ? ' ' + i18n.filesDeletedToo : '' ) ) ) {
 			return;
 		}
 		var docId = e.target.getAttribute( 'data-doc-id' );
@@ -543,7 +651,11 @@
 	} );
 	document.getElementById( 'mulino-bulk-delete' ).addEventListener( 'click', function () {
 		var ids = selectedIds();
-		if ( ! ids.length || ! confirm( 1 === ids.length ? i18n.bulkDeleteConfirmOne : format( i18n.bulkDeleteConfirm, ids.length ) ) ) {
+		var question = 1 === ids.length ? i18n.bulkDeleteConfirmOne : format( i18n.bulkDeleteConfirm, ids.length );
+		if ( mulinoManager.deleteFiles ) {
+			question += ' ' + i18n.filesDeletedToo;
+		}
+		if ( ! ids.length || ! confirm( question ) ) {
 			return;
 		}
 		postAjax( { action: 'mulino_bulk_delete', doc_ids: ids } ).then( function ( json ) {
@@ -572,28 +684,76 @@
 		} );
 	} );
 
-	// --- Rename folder ---
+	// --- Edit folder: name, where it is, who can see it ---
+	var folderDialog = document.getElementById( 'mulino-folder-dialog' );
 	tree.addEventListener( 'click', function ( e ) {
 		if ( ! e.target.classList.contains( 'mulino-tree-rename' ) ) {
 			return;
 		}
 		e.preventDefault();
 		e.stopPropagation();
-		var li      = e.target.closest( '.mulino-tree-item' );
-		var link    = li.querySelector( ':scope > .mulino-tree-row > .mulino-tree-link' );
-		var termId  = e.target.getAttribute( 'data-term-id' );
-		var current = link.getAttribute( 'data-term-name' ) || link.textContent;
-		var name    = prompt( i18n.renameFolderPrompt, current );
-		if ( ! name || name === current ) {
-			return;
-		}
-		postAjax( { action: 'mulino_rename_folder', term_id: termId, name: name } ).then( function ( json ) {
-			if ( json.success ) {
-				link.setAttribute( 'data-term-name', name );
-				link.textContent = name;
-			} else {
-				alert( json.data && json.data.message ? json.data.message : i18n.couldNotRenameFolder );
+		var li          = e.target.closest( '.mulino-tree-item' );
+		var link        = li.querySelector( ':scope > .mulino-tree-row > .mulino-tree-link' );
+		var termId      = e.target.getAttribute( 'data-term-id' );
+		var oldName     = link.getAttribute( 'data-term-name' ) || link.textContent;
+		var oldParent   = li.getAttribute( 'data-parent-id' ) || '0';
+		var oldVisible  = li.getAttribute( 'data-visibility' ) || 'public';
+		var nameInput   = document.getElementById( 'mulino-folder-name' );
+		var parentList  = document.getElementById( 'mulino-folder-parent' );
+
+		nameInput.value  = oldName;
+		parentList.value = oldParent;
+		// A folder can't be placed inside itself or its own subfolders.
+		var own = [ termId ].concat( Array.prototype.map.call( li.querySelectorAll( '.mulino-tree-item' ), function ( child ) {
+			return child.getAttribute( 'data-term-id' );
+		} ) );
+		Array.prototype.forEach.call( parentList.options, function ( option ) {
+			option.disabled = own.indexOf( option.value ) > -1;
+		} );
+		folderDialog.querySelectorAll( 'input[name="mulino-folder-visibility"]' ).forEach( function ( radio ) {
+			radio.checked = radio.value === oldVisible;
+		} );
+
+		openDialog( folderDialog, function () {
+			var name     = nameInput.value.trim();
+			var parent   = parentList.value;
+			var checked  = folderDialog.querySelector( 'input[name="mulino-folder-visibility"]:checked' );
+			var visible  = checked ? checked.value : oldVisible;
+			var changed  = false;
+			var steps    = Promise.resolve( true );
+
+			if ( name && name !== oldName ) {
+				steps = steps.then( function ( ok ) {
+					return true !== ok ? ok : postAjax( { action: 'mulino_rename_folder', term_id: termId, name: name } ).then( function ( json ) {
+						changed = changed || json.success;
+						return json.success ? true : messageFrom( json, i18n.couldNotRenameFolder );
+					} );
+				} );
 			}
+			if ( parent !== oldParent ) {
+				steps = steps.then( function ( ok ) {
+					return true !== ok ? ok : postAjax( { action: 'mulino_move_folder', term_id: termId, new_parent_id: parent } ).then( function ( json ) {
+						changed = changed || json.success;
+						return json.success ? true : messageFrom( json, i18n.couldNotMoveFolder );
+					} );
+				} );
+			}
+			if ( visible !== oldVisible ) {
+				steps = steps.then( function ( ok ) {
+					return true !== ok ? ok : postAjax( { action: 'mulino_set_folder_visibility', term_id: termId, visibility: visible } ).then( function ( json ) {
+						changed = changed || json.success;
+						return json.success ? true : messageFrom( json, i18n.couldNotSave );
+					} );
+				} );
+			}
+			return steps.then( function ( result ) {
+				if ( true === result && changed ) {
+					location.reload(); // the tree, the lists and the links all change
+				}
+				return result;
+			}, function () {
+				return i18n.couldNotSave;
+			} );
 		} );
 	} );
 

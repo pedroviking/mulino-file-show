@@ -46,3 +46,13 @@ if ( get_option( 'mulino_delete_data_on_uninstall', false ) ) {
 }
 
 delete_option( 'mulino_delete_data_on_uninstall' );
+delete_option( 'mulino_delete_files_with_documents' );
+delete_option( 'mulino_capability_version' );
+
+// The manage_mulino_documents capability, from roles and from single users.
+foreach ( wp_roles()->role_objects as $mulino_role ) {
+	$mulino_role->remove_cap( 'manage_mulino_documents' );
+}
+foreach ( get_users( array( 'capability' => 'manage_mulino_documents', 'fields' => 'all' ) ) as $mulino_user ) {
+	$mulino_user->remove_cap( 'manage_mulino_documents' );
+}

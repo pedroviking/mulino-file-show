@@ -4,11 +4,11 @@ Tags: documents, files, folders, file manager, document library
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Browse documents in nested, drag-and-drop-organized folders, with a simple public shortcode and no custom database tables.
+Browse documents in nested, drag-and-drop-organized folders, shown on your site with a block or shortcode. No custom database tables.
 
 == Description ==
 
@@ -16,7 +16,7 @@ Mulino file show is a lightweight document library for WordPress. Organize
 documents into nested folders (Decade > Year, Department > Project, or
 any hierarchy you like), manage everything with a drag-and-drop admin
 screen, and let visitors browse the same structure on your public site
-with a single shortcode.
+with a block or a shortcode.
 
 **Admin features**
 
@@ -27,12 +27,20 @@ with a single shortcode.
 * Export the whole library as a ZIP file, with the folders intact
 * Import from Simple File List, which has been closed on WordPress.org
 * Rename or delete folders and documents from the same screen
+* Give a document a short description, or replace its file with a new version: the link on the site stays the same
+* Choose per folder whether everyone or only logged-in users can see it
+* Let a board member manage the documents without making them an editor of the whole site: tick "Can manage the document library" on their user profile
+* Works with the keyboard and on phones: every action can be done without dragging
 * Nested folders of unlimited depth
 * Uploads run one file at a time with a progress bar, and files that are too big for your web host are caught before they are sent
 
 **Frontend features**
 
-* `[mulino_documents]` shortcode shows a breadcrumb-navigable folder browser
+* A "Document library" block, or the `[mulino_documents]` shortcode, shows a breadcrumb-navigable folder browser
+* Show the documents as a grid of icons or as a list with type, size, date and description
+* Optional search box, which searches names and descriptions in the open folder and below
+* Optional page links for folders with many documents
+* Show the whole library to logged-in users only, or hide single folders from visitors who aren't logged in
 * Show the whole library, or start in one folder with `folder="..."`
 * Natural sorting ("Minutes 2" before "Minutes 10"), optionally newest year first
 * Optionally hide folders that have no documents yet
@@ -58,8 +66,8 @@ https://github.com/pedroviking/mulino-file-show
 2. Activate the plugin through the 'Plugins' screen in WordPress.
 3. Go to **File Show** in the admin menu to create folders and upload
    documents.
-4. Add the `[mulino_documents]` shortcode to any page or post to
-   show the public folder browser.
+4. Add the **Document library** block (or the `[mulino_documents]`
+   shortcode) to any page or post to show the public folder browser.
 
 == Frequently Asked Questions ==
 
@@ -78,17 +86,26 @@ You can run the import again at any time; files that are already imported are sk
 
 Yes. **Export as ZIP** on the File Show screen downloads every document, sorted into the same folders as in the library.
 
+= How do I show the library on a page? =
+
+Add the **Document library** block to the page (search for "documents" in the block inserter) and choose its options in the sidebar. If you use the classic editor or a page builder, add the `[mulino_documents]` shortcode instead. The block and the shortcode show exactly the same thing.
+
 = Which options does the shortcode have? =
 
-All of them are optional:
+The same as the block. All of them are optional:
 
 * `folder="minutes"` starts the browser in the folder with that slug instead of at the top of the library. Visitors can't browse above it, so you can put different folders on different pages.
 * `folder_order="desc"` lists folders in reverse order, e.g. the newest year first. Default: `asc`.
 * `orderby="date"` sorts documents by upload date instead of by name. Default: `name`.
 * `document_order="desc"` reverses the document order, e.g. "Budget 2010" before "Budget 2009". Default: `asc`. (`order` works too.)
 * `hide_empty="yes"` hides folders with no documents in them or in any of their subfolders. Default: `no`.
+* `layout="list"` shows one line per folder and document instead of a grid of icons. Default: `grid`.
+* `details="yes"` shows the file type, size, upload date and description. Default: `yes` in the list, `no` in the grid.
+* `search="yes"` adds a search box. Default: `no`.
+* `per_page="20"` shows 20 documents at a time, with links to the next pages. Default: `0` (all).
+* `logged_in_only="yes"` shows the library to logged-in users only and asks everyone else to log in. Default: `no`.
 
-Example: `[mulino_documents folder="minutes" folder_order="desc"]`
+Example: `[mulino_documents folder="minutes" folder_order="desc" layout="list" search="yes"]`
 
 To find a folder's slug, open the folder on the **File Show** admin screen and look at the address bar: it's the part after `folder=`, e.g. `board-minutes` for a folder called "Board Minutes".
 
@@ -116,9 +133,21 @@ By default nothing: your documents and folders stay in the database, so you can 
 
 = Does deleting a document also delete the uploaded file? =
 
-Not currently. Deleting a document removes it from Mulino file show (moving
-it to the trash), but the underlying file remains in your media
-library. This may change in a future version.
+Not by default. Deleting a document moves it to the trash (**File Show > All documents > Trash**), and the file stays in the Media Library. If you want the file deleted too, tick "Also delete its file from the Media Library" under **Settings > Media**. The file, and any older versions of it, is then deleted when the document is deleted permanently from the trash, which WordPress also does by itself after 30 days.
+
+= How do I hide documents from the public? =
+
+Click the pencil next to a folder on the **File Show** screen and choose "Only logged-in users". The folder, its subfolders and their documents are then left out of the library and its search for visitors who aren't logged in, and the links to the documents ask them to log in. To hide the whole library, turn on "Only for logged-in users" on the block, or use `logged_in_only="yes"`.
+
+Note that this hides the documents, it doesn't lock the files: the files are in your normal `wp-content/uploads/` folder, so anyone who already has the direct address of a file can still open it.
+
+= Can I update a document without breaking links to it? =
+
+Yes. Click the pencil on the document and choose a new file under "Replace with a new version". The library links to every document through an address like `example.com/?mulino_document=123`, which always opens the newest file, so links in e-mails and on other pages keep working. The old file stays in the Media Library.
+
+= Who can manage the documents? =
+
+Administrators and editors, plus any user you give access on their profile (**Users > edit the user > "Can manage the document library"**). That way a board member can look after the documents without being able to change the rest of the site.
 
 == Screenshots ==
 
@@ -126,6 +155,22 @@ library. This may change in a future version.
 2. The public folder browser shown by the `[mulino_documents]` shortcode.
 
 == Changelog ==
+
+= 1.3.0 =
+* New: a "Document library" block with the same options as the shortcode.
+* New: list layout, and details under each document: file type, size, upload date and description. Shortcode options `layout` and `details`.
+* New: a search box that searches document names and descriptions (`search="yes"`).
+* New: page links for folders with many documents (`per_page`).
+* New: descriptions for documents. Descriptions imported from Simple File List are shown too.
+* New: replace a document's file with a new version. The document keeps its name, folder and link.
+* New: choose per folder who can see it on the site: everyone or only logged-in users. The whole library can also be shown to logged-in users only (`logged_in_only="yes"`).
+* New: a setting under Settings > Media to delete a document's file from the Media Library when the document is deleted permanently.
+* New: the capability `manage_mulino_documents`, so a user can be given access to the documents on their profile without being an editor. Every role that could upload files and manage documents before (normally administrator, editor and author) gets it automatically. Contributors no longer have access.
+* New: "All documents" under File Show, with WordPress' list of documents and the trash.
+* Changed: the documents on the site now link to `?mulino_document=ID`, which forwards to the file, so links keep working when a file is replaced.
+* Changed: renaming and moving a folder now happens in an "Edit folder" window, which also works with the keyboard and on phones. Dragging still works.
+* Accessibility: buttons have names for screen readers, the breadcrumb and page links are marked up as navigation, the file type is read out, and hidden buttons appear when they get keyboard focus.
+* New hooks for developers: `mulino_user_can_view_folder`, `mulino_user_can_view_document`, `mulino_folder_visibility_options`, `mulino_document_url`, `mulino_before_serve_document`, `mulino_after_replace_file`, `mulino_after_description_changed` and `mulino_after_folder_visibility_changed`. See HOOKS.md.
 
 = 1.2.1 =
 * New "Choose files" button in the upload area, so documents can also be uploaded from phones and tablets, where dragging and dropping isn't possible, and with the keyboard.
