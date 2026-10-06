@@ -4,7 +4,7 @@ Tags: documents, files, folders, file manager, document library
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,10 @@ Administrators, editors and authors, plus any user you give access on their prof
 6. The Document library block and its settings in the block editor.
 
 == Changelog ==
+
+= 1.3.1 =
+* Fixed: the Document library block now looks the same in the block editor as on the site (the stylesheet was missing in the editor).
+* New screenshots.
 
 = 1.3.0 =
 * New: a "Document library" block with the same options as the shortcode.
