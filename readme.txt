@@ -151,8 +151,12 @@ Administrators, editors and authors, plus any user you give access on their prof
 
 == Screenshots ==
 
-1. The Mulino file show admin screen, with the folder tree and drag-and-drop upload area.
-2. The public folder browser shown by the `[mulino_documents]` shortcode.
+1. The File Show admin screen: the folder tree, the drag-and-drop upload area and the documents in the open folder.
+2. The library on the site in the list layout, with search, file type, size, date and descriptions.
+3. The same library in the grid layout.
+4. Editing a folder: name, place in the tree, and whether everyone or only logged-in users can see it.
+5. Editing a document: name, description, and replacing the file with a new version without breaking links.
+6. The Document library block and its settings in the block editor.
 
 == Changelog ==
 
