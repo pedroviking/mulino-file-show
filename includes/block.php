@@ -15,10 +15,15 @@ function mulino_register_block() {
 		return;
 	}
 
+	// The same stylesheet as on the site, so the preview in the editor
+	// looks like the real thing.
+	wp_register_style( 'mulino-frontend', MULINO_URL . 'assets/css/frontend.css', array(), MULINO_VERSION );
+
 	register_block_type(
 		MULINO_PATH . 'blocks/documents',
 		array(
 			'render_callback' => 'mulino_render_block',
+			'style'           => 'mulino-frontend',
 		)
 	);
 
