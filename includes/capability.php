@@ -2,7 +2,8 @@
 /**
  * The plugin's own capability, manage_mulino_documents: who may use the
  * File Show screen, upload, move, rename and delete documents and
- * folders. Administrators and editors get it automatically, and an
+ * folders. Administrators, editors and authors get it automatically
+ * (every role that can both edit posts and upload files), and an
  * administrator can give it to any single user (e.g. a board member)
  * on that user's profile screen, without making them an editor of the
  * whole site.

@@ -147,7 +147,7 @@ Yes. Click the pencil on the document and choose a new file under "Replace with 
 
 = Who can manage the documents? =
 
-Administrators and editors, plus any user you give access on their profile (**Users > edit the user > "Can manage the document library"**). That way a board member can look after the documents without being able to change the rest of the site.
+Administrators, editors and authors, plus any user you give access on their profile (**Users > edit the user > "Can manage the document library"**). That way a board member can look after the documents without being able to change the rest of the site.
 
 == Screenshots ==
 
