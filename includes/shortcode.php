@@ -92,6 +92,8 @@ function mulino_shortcode( $atts = array() ) {
 		<?php
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each value is escaped individually inside this function before being concatenated into the returned HTML string.
 		echo mulino_render_breadcrumb( $current_term, $taxonomy, $root_term );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the add-on HTML is passed through wp_kses() inside this function.
+		echo mulino_render_folder_actions( $current_term, $args );
 		if ( $args['search'] ) {
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each value is escaped individually inside this function before being concatenated into the returned HTML string.
 			echo mulino_render_search_form( $current_term, $root_term, $search );
@@ -195,6 +197,65 @@ function mulino_browser_base_url() {
  */
 function mulino_folder_url( $term ) {
 	return add_query_arg( 'mulino_folder', $term->slug, mulino_browser_base_url() );
+}
+
+/**
+ * Room for add-ons below the breadcrumb, e.g. a "Follow this folder"
+ * button. Free itself prints nothing here.
+ */
+function mulino_render_folder_actions( $current_term, $args = array() ) {
+	/**
+	 * Filters the HTML printed below the breadcrumb of the frontend
+	 * [mulino_documents] browser, for the folder the visitor is looking at.
+	 *
+	 * @param string        $html         HTML to print; empty by default.
+	 * @param WP_Term|false $current_term The folder being shown, or false
+	 *                                    at the top of the whole library.
+	 * @param array         $args         The parsed shortcode attributes.
+	 */
+	$html = (string) apply_filters( 'mulino_frontend_folder_actions', '', $current_term, $args );
+	if ( '' === trim( $html ) ) {
+		return '';
+	}
+	return '<div class="mulino-folder-actions">' . wp_kses( $html, mulino_frontend_actions_allowed_html() ) . '</div>';
+}
+
+/**
+ * Post-safe markup plus the small forms an add-on needs on the
+ * frontend (a button, an e-mail field). No scripts or inline handlers.
+ */
+function mulino_frontend_actions_allowed_html() {
+	$allowed = wp_kses_allowed_html( 'post' );
+
+	$common = array(
+		'class'      => true,
+		'id'         => true,
+		'aria-label' => true,
+		'data-*'     => true,
+	);
+
+	$allowed['form']   = $common + array(
+		'action' => true,
+		'method' => true,
+	);
+	$allowed['input']  = $common + array(
+		'type'         => true,
+		'name'         => true,
+		'value'        => true,
+		'placeholder'  => true,
+		'required'     => true,
+		'autocomplete' => true,
+		'checked'      => true,
+	);
+	$allowed['button'] = $common + array(
+		'type'     => true,
+		'name'     => true,
+		'value'    => true,
+		'disabled' => true,
+	) + ( isset( $allowed['button'] ) ? $allowed['button'] : array() );
+	$allowed['label']  = $common + array( 'for' => true );
+
+	return $allowed;
 }
 
 function mulino_render_login_message() {

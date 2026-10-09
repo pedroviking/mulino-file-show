@@ -58,6 +58,7 @@ add_filter( 'mulino_manager_toolbar', function ( $html ) {
 
 | Hook | What it changes | Signature |
 |---|---|---|
+| `mulino_frontend_folder_actions` | HTML printed just below the breadcrumb, for the folder the visitor is looking at (e.g. a "Follow this folder" button). Nothing is printed when it returns an empty string | `apply_filters( 'mulino_frontend_folder_actions', string $html, WP_Term\|false $current_term, array $args )` (`false` at the top of the whole library; `$args` are the parsed shortcode attributes, e.g. `folder`, `layout`, `search`) |
 | `mulino_frontend_document_query_args` | The `get_posts()` arguments used to list the documents in the folder a visitor is looking at in `[mulino_documents]` | `apply_filters( 'mulino_frontend_document_query_args', array $query_args, WP_Term\|false $current_term )` (`false` at the top of the whole library) |
 
 Example -- only list documents whose title contains "Approved":
@@ -67,6 +68,29 @@ add_filter( 'mulino_frontend_document_query_args', function ( $query_args, $curr
     $query_args['s'] = 'Approved';
     return $query_args;
 }, 10, 2 );
+```
+
+The output of `mulino_frontend_folder_actions` is wrapped in
+`<div class="mulino-folder-actions">` and passed through `wp_kses()`
+with the post-safe markup plus `form`, `input`, `button` and `label`
+(and `data-*` attributes), so an add-on can print a small form. Scripts
+and inline event handlers are stripped -- enqueue your own script and
+find the markup by class or `data-*` attribute. The filter also runs
+on search results; check `$_GET['mulino_search']` if you don't want it
+there. Example -- a "Follow" button that posts to `admin-post.php`:
+
+```php
+add_filter( 'mulino_frontend_folder_actions', function ( $html, $current_term, $args ) {
+    if ( ! $current_term || ! is_user_logged_in() ) {
+        return $html;
+    }
+    return $html . '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
+        . '<input type="hidden" name="action" value="my_follow_folder" />'
+        . '<input type="hidden" name="folder" value="' . esc_attr( $current_term->term_id ) . '" />'
+        . wp_nonce_field( 'my_follow_folder', '_wpnonce', true, false )
+        . '<button type="submit" class="mulino-follow">Follow this folder</button>'
+        . '</form>';
+}, 10, 3 );
 ```
 
 ## Filters (who may see what)
@@ -115,9 +139,8 @@ taxonomy map all their capabilities to it.
 
 ## What's intentionally *not* a hook (yet)
 
-The markup of the frontend `[mulino_documents]` browser isn't
-filterable yet. If a premium add-on needs to add something to the
-public-facing folder browser (not just the admin screen), that's a
-reasonable next hook to add -- open an issue on the repository rather
-than reading shortcode.php's internals directly, since those internals
-aren't a stable contract.
+Apart from `mulino_frontend_folder_actions`, the markup of the frontend
+`[mulino_documents]` browser isn't filterable. If an add-on needs to add
+something elsewhere in the public-facing browser (e.g. on each document),
+open an issue on the repository rather than reading shortcode.php's
+internals directly, since those internals aren't a stable contract.

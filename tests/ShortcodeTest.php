@@ -62,6 +62,42 @@ class ShortcodeTest extends MULINO_TestCase {
 	}
 
 	// ---------------------------------------------------------------
+	// mulino_render_folder_actions()
+	// ---------------------------------------------------------------
+
+	public function test_folder_actions_print_nothing_without_an_add_on() {
+		$html = mulino_render_folder_actions( false, array() );
+
+		$this->assertSame( '', $html );
+	}
+
+	public function test_folder_actions_wrap_and_sanitize_add_on_html() {
+		$folder = $this->make_term( 10, '2023', '2023' );
+		$args   = array( 'layout' => 'list' );
+		$button = '<form method="post"><button type="submit">Follow</button></form>';
+
+		WP_Mock::onFilter( 'mulino_frontend_folder_actions' )->with( '', $folder, $args )->reply( $button );
+		WP_Mock::userFunction( 'wp_kses_allowed_html' )->with( 'post' )->andReturn( array( 'a' => array( 'href' => true ) ) );
+		WP_Mock::userFunction( 'wp_kses' )
+			->once()
+			->andReturnUsing(
+				function ( $html, $allowed ) {
+					// The add-on's form must survive the sanitizing.
+					$this->assertArrayHasKey( 'form', $allowed );
+					$this->assertArrayHasKey( 'input', $allowed );
+					$this->assertArrayHasKey( 'button', $allowed );
+					$this->assertArrayNotHasKey( 'script', $allowed );
+					$this->assertArrayNotHasKey( 'onclick', $allowed['button'] );
+					return $html;
+				}
+			);
+
+		$html = mulino_render_folder_actions( $folder, $args );
+
+		$this->assertSame( '<div class="mulino-folder-actions">' . $button . '</div>', $html );
+	}
+
+	// ---------------------------------------------------------------
 	// mulino_render_subfolders()
 	// ---------------------------------------------------------------
 

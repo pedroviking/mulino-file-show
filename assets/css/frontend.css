@@ -8,6 +8,15 @@
 .mulino-breadcrumb a:hover { text-decoration: underline; }
 .mulino-breadcrumb .mulino-current { font-weight: 600; color: #23282d; }
 
+/* Add-on buttons and forms below the breadcrumb (mulino_frontend_folder_actions). */
+.mulino-folder-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5em;
+	margin: -0.5em 0 1.25em;
+}
+
 .mulino-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
