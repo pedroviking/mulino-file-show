@@ -23,7 +23,7 @@ PHP versions.
   trash them together
 - **Rename and delete** folders and documents from the same screen
 - **Export as ZIP** with the folder structure intact, so you're never locked in
-- **Import from Simple File List**, which was closed on WordPress.org in July 2026
+- **Import from Simple File List**: folders, names, descriptions and dates
 - **Frontend browser** via a simple shortcode, with breadcrumb
   navigation and file-type icons (PDF, Word, Excel, etc.)
 - No custom database tables — built entirely on WordPress' own post

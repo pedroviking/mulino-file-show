@@ -18,6 +18,13 @@ any hierarchy you like), manage everything with a drag-and-drop admin
 screen, and let visitors browse the same structure on your public site
 with a block or a shortcode.
 
+**Coming from Simple File List?**
+
+Mulino file show can import your Simple File List library in one go:
+subfolders, file names, descriptions and upload dates come along, and
+the files you already have are left as they are. See "How do I switch
+from Simple File List?" in the FAQ.
+
 **Admin features**
 
 * Drag and drop files straight from your computer to upload them into a folder, or use the "Choose files" button (also on phones and tablets)
@@ -25,7 +32,7 @@ with a block or a shortcode.
 * Drag existing documents or whole folders to re-file them
 * Tick several documents to move them or move them to the trash together
 * Export the whole library as a ZIP file, with the folders intact
-* Import from Simple File List, which has been closed on WordPress.org
+* Import your folders and files from Simple File List
 * Rename or delete folders and documents from the same screen
 * Give a document a short description, or replace its file with a new version: the link on the site stays the same
 * Choose per folder whether everyone or only logged-in users can see it
@@ -73,7 +80,7 @@ https://github.com/pedroviking/mulino-file-show
 
 = How do I switch from Simple File List? =
 
-Simple File List was closed on WordPress.org in July 2026 and no longer receives security updates. To move your files over:
+The import copies your Simple File List library into Mulino file show. To move your files over:
 
 1. Install and activate Mulino file show. Keep Simple File List installed for now.
 2. Go to **File Show > Import** and click **Start import**. The files are copied into the Media Library, and subfolders, file names, descriptions and upload dates are kept. Simple File List's own files are not changed.
