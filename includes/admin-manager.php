@@ -77,6 +77,7 @@ function mulino_enqueue_manager_assets( $hook ) {
 			'maxUploadSize' => wp_max_upload_size(),
 			'i18n'          => array(
 				'uploadFailed'         => __( 'Upload failed.', 'mulino-file-show' ),
+				'couldNotReadDropped'  => __( 'The browser could not read the dropped files. Use the "Choose files" button instead.', 'mulino-file-show' ),
 				/* translators: 1: file name, 2: maximum upload size, e.g. "8 MB". */
 				'fileTooLarge'         => __( '%1$s is larger than the maximum upload size of %2$s.', 'mulino-file-show' ),
 				'maxUploadSizeText'    => size_format( wp_max_upload_size() ),

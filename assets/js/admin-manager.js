@@ -39,8 +39,19 @@
 		e.preventDefault();
 		var currentFolder = dropzone.getAttribute( 'data-folder-id' ) || '0';
 		document.querySelector( '#mulino-upload-status .mulino-upload-errors' ).innerHTML = '';
+		var droppedSomething = Array.prototype.some.call( e.dataTransfer.items || [], function ( item ) {
+			return 'file' === item.kind;
+		} ) || ( e.dataTransfer.files && e.dataTransfer.files.length > 0 );
 		collectDropped( e.dataTransfer ).then( function ( dropped ) {
 			if ( ! dropped.files.length && ! dropped.dirs.length ) {
+				if ( droppedSomething ) {
+					var status = document.getElementById( 'mulino-upload-status' );
+					var li     = document.createElement( 'li' );
+					status.hidden = false;
+					status.querySelector( '.mulino-upload-text' ).textContent = '';
+					li.textContent = i18n.couldNotReadDropped;
+					status.querySelector( '.mulino-upload-errors' ).appendChild( li );
+				}
 				return;
 			}
 			createFolders( dropped.dirs, currentFolder ).then( function ( folderIds ) {
@@ -90,6 +101,10 @@
 			Array.prototype.forEach.call( dataTransfer.items, function ( item ) {
 				var entry = 'file' === item.kind ? item.webkitGetAsEntry() : null;
 				if ( entry ) {
+					// Some browsers (e.g. Firefox as a Linux snap) can't
+					// read a dropped file through its entry, so keep the
+					// plain File too, as a fallback for entry.file().
+					entry.mulinoFile = item.getAsFile();
 					entries.push( entry );
 				}
 			} );
@@ -113,7 +128,12 @@
 					entry.file( function ( file ) {
 						result.files.push( { file: file, dir: dir } );
 						resolve();
-					}, function () {
+					}, function ( err ) {
+						if ( entry.mulinoFile ) {
+							result.files.push( { file: entry.mulinoFile, dir: dir } );
+						} else {
+							window.console.warn( 'Mulino: could not read the dropped file', entry.name, err );
+						}
 						resolve();
 					} );
 				} );
