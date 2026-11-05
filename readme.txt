@@ -4,7 +4,7 @@ Tags: documents, files, folders, file manager, document library
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -166,6 +166,10 @@ Administrators, editors and authors, plus any user you give access on their prof
 6. The Document library block and its settings in the block editor.
 
 == Changelog ==
+
+= 1.3.3 =
+* Fixed: files dragged into the document manager from some file managers were skipped without a word. They are now read another way, and if none can be read you get a message suggesting Choose files instead.
+* The note shown after importing from Simple File List is now worded neutrally.
 
 = 1.3.2 =
 * For developers: new filter `mulino_frontend_folder_actions` to add buttons or a small form below the breadcrumb of the library on the site (see HOOKS.md on GitHub).

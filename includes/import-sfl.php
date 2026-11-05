@@ -438,7 +438,7 @@ function mulino_render_import_page() {
 				<p>
 					<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=mulino-manager' ) ); ?>"><?php esc_html_e( 'Go to the library', 'mulino-file-show' ); ?></a>
 				</p>
-				<p><?php esc_html_e( 'When you have checked the imported documents, deactivate and delete Simple File List: it no longer receives security updates. Remember to replace its [eeSFL] shortcode with [mulino_documents] on your pages.', 'mulino-file-show' ); ?></p>
+				<p><?php esc_html_e( 'When you have checked the imported documents, you can deactivate and delete Simple File List. Remember to replace its [eeSFL] shortcode with [mulino_documents] on your pages.', 'mulino-file-show' ); ?></p>
 			</div>
 		<?php endif; ?>
 	</div>
